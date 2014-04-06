@@ -102,7 +102,8 @@ public class DetectionRequester
                 createRequestPendingIntent());
 
         // Disconnect the client
-        requestDisconnection();
+        //requestDisconnection();
+        // From the activity client, but we need to keep the connection for location!
     }
 
     /**
