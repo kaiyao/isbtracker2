@@ -16,22 +16,13 @@
 
 package com.nus.cs4222.isbtracker;
 
-import com.nus.cs4222.isbtracker.LocationUtils;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.google.android.gms.location.LocationClient;
-import com.google.android.gms.location.LocationRequest;
 import com.nus.cs4222.isbtracker.ActivityUtils.REQUEST_TYPE;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender;
-import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Spanned;
@@ -49,8 +40,6 @@ import com.nus.cs4222.isbtracker.R;
 import java.io.IOException;
 import java.util.List;
 
-import com.google.android.gms.location.LocationListener;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 
 /**
@@ -64,7 +53,8 @@ import android.support.v4.app.FragmentActivity;
  */
 public class MainActivity extends FragmentActivity{
 	
-	private LocationHelper h;
+	private LocationHelper hL;
+	private ActivityRecognitionHelper hA;
 
     private static final int MAX_LOG_SIZE = 5000;
 
@@ -121,20 +111,6 @@ public class MainActivity extends FragmentActivity{
 
         // Bind the adapter to the status list
         mStatusListView.setAdapter(mStatusAdapter);
-
-        // Set the broadcast receiver intent filer
-        mBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-        // Create a new Intent filter for the broadcast receiver
-        mBroadcastFilter = new IntentFilter(ActivityUtils.ACTION_REFRESH_STATUS_LIST);
-        mBroadcastFilter.addCategory(ActivityUtils.CATEGORY_LOCATION_SERVICES);
-
-        // Get detection requester and remover objects
-        mDetectionRequester = new DetectionRequester(this);
-        mDetectionRemover = new DetectionRemover(this);
-
-        // Create a new LogFile object
-        mLogFile = LogFile.getInstance(this);
 
     }
 
@@ -281,9 +257,21 @@ public class MainActivity extends FragmentActivity{
          * instead, wait for onResume()
          */
         
+        // Set the broadcast receiver intent filer
+        mBroadcastManager = LocalBroadcastManager.getInstance(this);
+
+        // Create a new Intent filter for the broadcast receiver
+        mBroadcastFilter = new IntentFilter(ActivityUtils.ACTION_REFRESH_STATUS_LIST);
+        mBroadcastFilter.addCategory(ActivityUtils.CATEGORY_LOCATION_SERVICES);
+        
+        // Create a new LogFile object
+        mLogFile = LogFile.getInstance(this);
+        
         Log.d("ISBTracker", "Location button pressed");
-    	h = new LocationHelper();
-    	h.setup(this);
+    	hL = new LocationHelper();
+    	hL.setup(this);
+    	
+    	hA = new ActivityRecognitionHelper(this);
     }
 
     /*
@@ -296,86 +284,6 @@ public class MainActivity extends FragmentActivity{
         //mBroadcastManager.unregisterReceiver(updateListReceiver);
 
         super.onPause();
-    }
-
-    /**
-     * Verify that Google Play services is available before making a request.
-     *
-     * @return true if Google Play services is available, otherwise false
-     */
-    
-    private boolean servicesConnected() {
-
-        // Check that Google Play services is available
-        int resultCode =
-                GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-
-        // If Google Play services is available
-        if (ConnectionResult.SUCCESS == resultCode) {
-
-            // In debug mode, log the status
-            Log.d(ActivityUtils.APPTAG, getString(R.string.play_services_available));
-
-            // Continue
-            return true;
-
-        // Google Play services was not available for some reason
-        } else {
-
-            // Display an error dialog
-            GooglePlayServicesUtil.getErrorDialog(resultCode, this, 0).show();
-            return false;
-        }
-    }
-    
-    /**
-     * Respond to "Start" button by requesting activity recognition
-     * updates.
-     * @param view The view that triggered this method.
-     */
-    public void onStartUpdates(View view) {
-
-        // Check for Google Play services
-        if (!servicesConnected()) {
-            return;
-        }
-
-        /*
-         * Set the request type. If a connection error occurs, and Google Play services can
-         * handle it, then onActivityResult will use the request type to retry the request
-         */
-        mRequestType = ActivityUtils.REQUEST_TYPE.ADD;
-
-        // Pass the update request to the requester object
-        mDetectionRequester.requestUpdates();
-    }
-
-    /**
-     * Respond to "Stop" button by canceling updates.
-     * @param view The view that triggered this method.
-     */
-    public void onStopUpdates(View view) {
-
-        // Check for Google Play services
-        if (!servicesConnected()) {
-
-            return;
-        }
-
-        /*
-         * Set the request type. If a connection error occurs, and Google Play services can
-         * handle it, then onActivityResult will use the request type to retry the request
-         */
-        mRequestType = ActivityUtils.REQUEST_TYPE.REMOVE;
-
-        // Pass the remove request to the remover object
-        mDetectionRemover.removeUpdates(mDetectionRequester.getRequestPendingIntent());
-
-        /*
-         * Cancel the PendingIntent. Even if the removal request fails, canceling the PendingIntent
-         * will stop the updates.
-         */
-        mDetectionRequester.getRequestPendingIntent().cancel();
     }
 
     /**
@@ -436,6 +344,20 @@ public class MainActivity extends FragmentActivity{
     };
     
     public void getLocation(View v) {
-    	h.getLocation(v);
+    	hL.getLocation(v);
+    }
+    
+    public void onStartUpdates(View view) {
+       hA.onStartUpdates(view);
+    }
+    
+
+
+    /**
+     * Respond to "Stop" button by canceling updates.
+     * @param view The view that triggered this method.
+     */
+    public void onStopUpdates(View view) {
+    	hA.onStopUpdates(view);
     }
 }
