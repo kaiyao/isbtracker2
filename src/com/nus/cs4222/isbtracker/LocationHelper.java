@@ -34,17 +34,55 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     private LocationRequest mLocationRequest;
     
     boolean mUpdatesRequested = false;
+    boolean mSingleUpdateRequested = false;
+    int mSingleUpdateResponseCount = 0;
     
     
 	
-	@Override
-	public void onLocationChanged(Location arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+    /**
+     * Report location updates to the UI.
+     *
+     * @param location The updated location.
+     */
+    @Override
+    public void onLocationChanged(Location location) {
+
+    	/*
+        // Report to the UI that the location was updated
+        mConnectionStatus.setText(R.string.location_updated);
+
+        // In the UI, set the latitude and longitude to the value received
+        mLatLng.setText(LocationUtils.getLatLng(this, location));
+        */
+    	
+    	if (mSingleUpdateRequested) {
+    		Log.d("CurrentLocation", "Getting results");    		
+    		Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
+    		
+    		LogFile.getInstance(mContext).log(
+            		LocationUtils.getLatLng(mContext, location)
+                );
+    	
+    		mSingleUpdateResponseCount++;
+    		
+    		// We wait for two counts in case first one is a cached response
+    		if (mSingleUpdateResponseCount >= 2) {
+    			mSingleUpdateRequested = false;
+    			mLocationClient.removeLocationUpdates(this);
+    		}
+    	}else{ // periodic updates
+    		Log.d("CurrentLocation", "Getting results");    		
+    		Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
+    		
+    		LogFile.getInstance(mContext).log(
+            		LocationUtils.getLatLng(mContext, location)
+                );
+    	}
+    	
+    }
 	
 	// Location stuff    
-    public void getLocation(View v) {
+    public void getLastLocation(View v) {
 
         // If Google Play Services is available
         if (servicesConnected()) {
@@ -60,6 +98,63 @@ GooglePlayServicesClient.OnConnectionFailedListener {
             
             Log.d("ISBTracker", "Current Location: "+LocationUtils.getLatLng(mContext, currentLocation));
         }
+    }
+    
+    // Location stuff    
+    public void getCurrentLocation(View v) {
+
+        // If Google Play Services is available
+        if (servicesConnected()) {
+        	Log.d("CurrentLocation", "Creating location request");
+        	LocationRequest mLocationRequest = LocationRequest.create();
+
+            /*
+             * Set the update interval
+             */
+            mLocationRequest.setInterval(LocationUtils.UPDATE_INTERVAL_IN_MILLISECONDS);
+
+            // Use high accuracy
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+
+            // Set the interval ceiling to one minute
+            mLocationRequest.setFastestInterval(LocationUtils.FAST_INTERVAL_CEILING_IN_MILLISECONDS);
+        	
+            Log.d("CurrentLocation", "Sending request");
+        	mSingleUpdateRequested = true;
+        	mSingleUpdateResponseCount = 0;
+        	mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        	
+        }
+    }
+    
+    public void getContinuousLocation(View v) {
+
+        // If Google Play Services is available
+        if (servicesConnected()) {
+        	Log.d("CurrentLocation", "Creating location request");
+        	LocationRequest mLocationRequest = LocationRequest.create();
+
+            /*
+             * Set the update interval
+             */
+            mLocationRequest.setInterval(LocationUtils.UPDATE_INTERVAL_IN_MILLISECONDS);
+
+            // Use high accuracy
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+            // Set the interval ceiling to one minute
+            mLocationRequest.setFastestInterval(LocationUtils.FAST_INTERVAL_CEILING_IN_MILLISECONDS);
+        	
+            Log.d("CurrentLocation", "Sending request");
+        	mUpdatesRequested = true;
+        	mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        	
+        }
+    }
+    
+    public void stopContinousLocation(){
+    	mUpdatesRequested = false;
+    	mLocationClient.removeLocationUpdates(this);
     }
 	
 	public void setup(FragmentActivity activity) {

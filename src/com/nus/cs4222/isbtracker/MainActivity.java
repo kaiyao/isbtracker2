@@ -344,7 +344,9 @@ public class MainActivity extends FragmentActivity{
     };
     
     public void getLocation(View v) {
-    	hL.getLocation(v);
+    	//hL.getLastLocation(v);
+    	//hL.getCurrentLocation(v);
+    	hL.getContinuousLocation(v);
     }
     
     public void onStartUpdates(View view) {
