@@ -164,6 +164,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     }
     
     // Define the callback method that receives location updates
+    // @param Location http://developer.android.com/reference/android/location/Location.html
     @Override
     public void onLocationChanged(Location location) {
 
@@ -174,6 +175,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         // In the UI, set the latitude and longitude to the value received
         mLatLng.setText(LocationUtils.getLatLng(this, location));
         */
+    	
+    	StateMachine s = StateMachine.getReadyInstance();
+    	if (s != null) {
+    		s.locationChanged(location);
+    	}
+    	
         
         if (mSingleUpdateRequested) {
             Log.d("CurrentLocation", "Getting results");            

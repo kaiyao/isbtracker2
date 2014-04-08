@@ -66,6 +66,12 @@ public class ActivityRecognitionIntentService extends IntentService {
              * Intent.
              */
             Log.v("ActivityRecognitionResult", String.format("%s %d", activityName, confidence));
+            
+            StateMachine s = StateMachine.getReadyInstance();
+            if (s != null) {
+            	s.activityDetected(result);
+            }            
+        	
         } else {
             /*
              * This implementation ignores intents that don't contain
