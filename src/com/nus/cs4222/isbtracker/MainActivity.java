@@ -16,15 +16,8 @@
 
 package com.nus.cs4222.isbtracker;
 
-import com.nus.cs4222.isbtracker.ActivityUtils.REQUEST_TYPE;
-
-import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.Spanned;
 import android.util.Log;
 import android.view.Menu;
@@ -32,13 +25,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.ListView;
-import android.widget.Toast;
-
 import com.nus.cs4222.isbtracker.R;
-
-import java.io.IOException;
-import java.util.List;
 
 import android.support.v4.app.FragmentActivity;
 
@@ -53,21 +40,10 @@ import android.support.v4.app.FragmentActivity;
  */
 public class MainActivity extends FragmentActivity{
 	
-	private LocationHelper hL;
-	private ActivityRecognitionHelper hA;
-
-    private static final int MAX_LOG_SIZE = 5000;
-
-    // Instantiates a log file utility object, used to log status updates
-    private LogFile mLogFile;
-
-    // Store the current request type (ADD or REMOVE)
-    private REQUEST_TYPE mRequestType;
-
-    // Holds the ListView object in the UI
-    private ListView mStatusListView;
-
-    /*
+	private ActivityRecognitionHelper activityRecognition;
+	private LocationHelper locationGetter;
+	
+	/*
      * Holds activity recognition data, in the form of
      * strings that can contain markup
      */
@@ -79,15 +55,6 @@ public class MainActivity extends FragmentActivity{
      */
     IntentFilter mBroadcastFilter;
 
-    // Instance of a local broadcast manager
-    private LocalBroadcastManager mBroadcastManager;
-
-    // The activity recognition update request object
-    private DetectionRequester mDetectionRequester;
-
-    // The activity recognition update removal object
-    private DetectionRemover mDetectionRemover;
-
     /*
      * Set main UI layout, get a handle to the ListView for logs, and create the broadcast
      * receiver.
@@ -98,76 +65,7 @@ public class MainActivity extends FragmentActivity{
 
         // Set the main layout
         setContentView(R.layout.activity_main);
-
-        // Get a handle to the activity update list
-        mStatusListView = (ListView) findViewById(R.id.log_listview);
-
-        // Instantiate an adapter to store update data from the log
-        mStatusAdapter = new ArrayAdapter<Spanned>(
-                this,
-                R.layout.item_layout,
-                R.id.log_text
-        );
-
-        // Bind the adapter to the status list
-        mStatusListView.setAdapter(mStatusAdapter);
-
-    }
-
-    /*
-     * Handle results returned to this Activity by other Activities started with
-     * startActivityForResult(). In particular, the method onConnectionFailed() in
-     * DetectionRemover and DetectionRequester may call startResolutionForResult() to
-     * start an Activity that handles Google Play services problems. The result of this
-     * call returns here, to onActivityResult.
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-        // Choose what to do based on the request code
-        switch (requestCode) {
-
-            // If the request code matches the code sent in onConnectionFailed
-            case ActivityUtils.CONNECTION_FAILURE_RESOLUTION_REQUEST :
-
-                switch (resultCode) {
-                    // If Google Play services resolved the problem
-                    case Activity.RESULT_OK:
-
-                        // If the request was to start activity recognition updates
-                        if (ActivityUtils.REQUEST_TYPE.ADD == mRequestType) {
-
-                            // Restart the process of requesting activity recognition updates
-                            mDetectionRequester.requestUpdates();
-
-                        // If the request was to remove activity recognition updates
-                        } else if (ActivityUtils.REQUEST_TYPE.REMOVE == mRequestType ){
-
-                                /*
-                                 * Restart the removal of all activity recognition updates for the 
-                                 * PendingIntent.
-                                 */
-                                mDetectionRemover.removeUpdates(
-                                    mDetectionRequester.getRequestPendingIntent());
-
-                        }
-                    break;
-
-                    // If any other result was returned by Google Play services
-                    default:
-
-                        // Report that Google Play services was unable to resolve the problem.
-                        Log.d(ActivityUtils.APPTAG, getString(R.string.no_resolution));
-                }
-
-            // If any other request code was received
-            default:
-               // Report that this Activity received an unknown requestCode
-               Log.d(ActivityUtils.APPTAG,
-                       getString(R.string.unknown_activity_request_code, requestCode));
-
-               break;
-        }
+        
     }
 
     /*
@@ -176,14 +74,6 @@ public class MainActivity extends FragmentActivity{
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Register the broadcast receiver
-        mBroadcastManager.registerReceiver(
-                updateListReceiver,
-                mBroadcastFilter);
-
-        // Load updated activity history
-        updateActivityHistory();
     }
 
     /*
@@ -215,7 +105,7 @@ public class MainActivity extends FragmentActivity{
                 mStatusAdapter.notifyDataSetChanged();
 
                 // Remove log files
-                if (!mLogFile.removeLogFiles()) {
+                /*if (!mLogFile.removeLogFiles()) {
                     Log.e(ActivityUtils.APPTAG, getString(R.string.log_file_deletion_error));
 
                 // Display the results to the user
@@ -225,7 +115,7 @@ public class MainActivity extends FragmentActivity{
                             this,
                             R.string.logs_deleted,
                             Toast.LENGTH_LONG).show();
-                }
+                }*/
                 // Continue by passing true to the menu handler
                 return true;
 
@@ -233,7 +123,7 @@ public class MainActivity extends FragmentActivity{
             case R.id.menu_item_showlog:
 
                 // Update the ListView from log files
-                updateActivityHistory();
+                //updateActivityHistory();
 
                 // Continue by passing true to the menu handler
                 return true;
@@ -244,122 +134,40 @@ public class MainActivity extends FragmentActivity{
         }
     }
     
-    /*
-     * Called when the Activity is restarted, even before it becomes visible.
-     */
     @Override
     public void onStart() {
-
         super.onStart();
-
-        /*
-         * Connect the client. Don't re-start any requests here;
-         * instead, wait for onResume()
-         */
-        
-        // Set the broadcast receiver intent filer
-        mBroadcastManager = LocalBroadcastManager.getInstance(this);
-
-        // Create a new Intent filter for the broadcast receiver
-        mBroadcastFilter = new IntentFilter(ActivityUtils.ACTION_REFRESH_STATUS_LIST);
-        mBroadcastFilter.addCategory(ActivityUtils.CATEGORY_LOCATION_SERVICES);
-        
-        // Create a new LogFile object
-        mLogFile = LogFile.getInstance(this);
-        
-        Log.d("ISBTracker", "Location button pressed");
-    	hL = new LocationHelper();
-    	hL.setup(this);
-    	
-    	hA = new ActivityRecognitionHelper(this);
     }
 
-    /*
-     * Unregister the receiver during a pause
-     */
     @Override
     protected void onPause() {
-
-        // Stop listening to broadcasts when the Activity isn't visible.
-        //mBroadcastManager.unregisterReceiver(updateListReceiver);
-
         super.onPause();
     }
-
-    /**
-     * Display the activity detection history stored in the
-     * log file
-     */
-    private void updateActivityHistory() {
-        // Try to load data from the history file
-        try {
-            // Load log file records into the List
-            List<Spanned> activityDetectionHistory =
-                    mLogFile.loadLogFile();
-
-            // Clear the adapter of existing data
-            mStatusAdapter.clear();
-
-            // Add each element of the history to the adapter
-            for (Spanned activity : activityDetectionHistory) {
-                mStatusAdapter.add(activity);
-            }
-
-            // If the number of loaded records is greater than the max log size
-            if (mStatusAdapter.getCount() > MAX_LOG_SIZE) {
-
-                // Delete the old log file
-                if (!mLogFile.removeLogFiles()) {
-
-                    // Log an error if unable to delete the log file
-                    Log.e(ActivityUtils.APPTAG, getString(R.string.log_file_deletion_error));
-                }
-            }
-
-            // Trigger the adapter to update the display
-            mStatusAdapter.notifyDataSetChanged();
-
-        // If an error occurs while reading the history file
-        } catch (IOException e) {
-            Log.e(ActivityUtils.APPTAG, e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Broadcast receiver that receives activity update intents
-     * It checks to see if the ListView contains items. If it
-     * doesn't, it pulls in history.
-     * This receiver is local only. It can't read broadcast Intents from other apps.
-     */
-    BroadcastReceiver updateListReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-            /*
-             * When an Intent is received from the update listener IntentService, update
-             * the displayed log.
-             */
-            updateActivityHistory();
-        }
-    };
     
-    public void getLocation(View v) {
-    	//hL.getLastLocation(v);
-    	//hL.getCurrentLocation(v);
-    	hL.getContinuousLocation(v);
+    public void startTracking(View v){
+    	Log.v("MainActivity", "Start Tracking");
+    	StateMachine.getInstance();
+    	activityRecognition = new ActivityRecognitionHelper(this);
+    	activityRecognition.startUpdates();
+    	locationGetter = new LocationHelper(this);
+    	
     }
     
-    public void onStartUpdates(View view) {
-       hA.onStartUpdates(view);
+    public void stopTracking(View v){
+    	Log.v("MainActivity", "Stop Tracking");
+    	activityRecognition.stopUpdates();
+    	locationGetter.stopContinousLocation();
     }
     
-
-
-    /**
-     * Respond to "Stop" button by canceling updates.
-     * @param view The view that triggered this method.
-     */
-    public void onStopUpdates(View view) {
-    	hA.onStopUpdates(view);
+    public void getLastLocation(View v) {    	
+    	locationGetter.getLastLocation();
+    }
+    
+    public void getCurrentLocation(View v) {
+    	locationGetter.getCurrentLocation();
+    }
+    
+    public void getContinuousLocation(View v) {    	
+    	locationGetter.getContinuousLocation();
     }
 }

@@ -1,146 +1,257 @@
 package com.nus.cs4222.isbtracker;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
-import com.nus.cs4222.isbtracker.ActivityUtils.REQUEST_TYPE;
-
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.ActivityRecognitionClient;
 import android.app.Activity;
-import android.content.IntentFilter;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.Spanned;
+import android.app.Dialog;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.content.IntentSender.SendIntentException;
+import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.ArrayAdapter;
 
-public class ActivityRecognitionHelper{
+public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnectionFailedListener {
 	
-	private Activity mActivity;
+	private FragmentActivity mActivity;
 	
-	// Store the current request type (ADD or REMOVE)
+    // Constants that define the activity detection interval
+    public static final int MILLISECONDS_PER_SECOND = 1000;
+    public static final int DETECTION_INTERVAL_SECONDS = 2;
+    public static final int DETECTION_INTERVAL_MILLISECONDS =
+            MILLISECONDS_PER_SECOND * DETECTION_INTERVAL_SECONDS;
+    
+    // Store the PendingIntent used to send activity recognition events back to the app
+    private PendingIntent mActivityRecognitionPendingIntent;
+    // Store the current activity recognition client
+    private ActivityRecognitionClient mActivityRecognitionClient;
+    // Flag that indicates if a request is underway. (prevent race conditions)
+    private boolean mInProgress;
+    
+    public enum REQUEST_TYPE {START, STOP}
     private REQUEST_TYPE mRequestType;
-    
-    /*
-     * Holds activity recognition data, in the form of
-     * strings that can contain markup
-     */
-    private ArrayAdapter<Spanned> mStatusAdapter;
-
-    /*
-     *  Intent filter for incoming broadcasts from the
-     *  IntentService.
-     */
-    IntentFilter mBroadcastFilter;
-
-    // Instance of a local broadcast manager
-    private LocalBroadcastManager mBroadcastManager;
-
-    // The activity recognition update request object
-    private DetectionRequester mDetectionRequester;
-
-    // The activity recognition update removal object
-    private DetectionRemover mDetectionRemover;
-    
-    private static final int MAX_LOG_SIZE = 5000;
-
-    // Instantiates a log file utility object, used to log status updates
-    private LogFile mLogFile;
     
     public ActivityRecognitionHelper (Activity activity){
     	
-    	mActivity = activity;
-    	
-    	
+    	mActivity = (FragmentActivity) activity; 
 
-        // Get detection requester and remover objects
-        mDetectionRequester = new DetectionRequester(mActivity);
-        mDetectionRemover = new DetectionRemover(mActivity);
-
+    	/*
+         * Instantiate a new activity recognition client. Since the
+         * parent Activity implements the connection listener and
+         * connection failure listener, the constructor uses "this"
+         * to specify the values of those parameters.
+         */
+        mActivityRecognitionClient =
+                new ActivityRecognitionClient(mActivity, this, this);
+        /*
+         * Create the PendingIntent that Location Services uses
+         * to send activity recognition updates back to this app.
+         */
+        Intent intent = new Intent(
+                mActivity, ActivityRecognitionIntentService.class);
+        /*
+         * Return a PendingIntent that starts the IntentService.
+         */
+        mActivityRecognitionPendingIntent =
+                PendingIntent.getService(mActivity, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
         
+        // Set request in progress state flag to false
+        mInProgress = false;
     }
 
-    /**
-     * Respond to "Start" button by requesting activity recognition
-     * updates.
-     * @param view The view that triggered this method.
-     */
-    public void onStartUpdates(View view) {
+    private final static int
+    CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
-        // Check for Google Play services
-        if (!servicesConnected()) {
-            return;
-        }
-
-        /*
-         * Set the request type. If a connection error occurs, and Google Play services can
-         * handle it, then onActivityResult will use the request type to retry the request
-         */
-        mRequestType = ActivityUtils.REQUEST_TYPE.ADD;
-
-        // Pass the update request to the requester object
-        mDetectionRequester.requestUpdates();
+    // Define a DialogFragment that displays the error dialog
+    public static class ErrorDialogFragment extends DialogFragment {
+    	// Global field to contain the error dialog
+    	private Dialog mDialog;
+    	// Default constructor. Sets the dialog field to null
+    	public ErrorDialogFragment() {
+    		super();
+    		mDialog = null;
+    	}
+    	// Set the dialog to display
+    	public void setDialog(Dialog dialog) {
+    		mDialog = dialog;
+    	}
+    	// Return a Dialog to the DialogFragment.
+    	@Override
+    	public Dialog onCreateDialog(Bundle savedInstanceState) {
+    		return mDialog;
+    	}
     }
-    
 
-
-    /**
-     * Respond to "Stop" button by canceling updates.
-     * @param view The view that triggered this method.
-     */
-    public void onStopUpdates(View view) {
-
-        // Check for Google Play services
-        if (!servicesConnected()) {
-
-            return;
-        }
-
-        /*
-         * Set the request type. If a connection error occurs, and Google Play services can
-         * handle it, then onActivityResult will use the request type to retry the request
-         */
-        mRequestType = ActivityUtils.REQUEST_TYPE.REMOVE;
-
-        // Pass the remove request to the remover object
-        mDetectionRemover.removeUpdates(mDetectionRequester.getRequestPendingIntent());
-
-        /*
-         * Cancel the PendingIntent. Even if the removal request fails, canceling the PendingIntent
-         * will stop the updates.
-         */
-        try{
-        	mDetectionRequester.getRequestPendingIntent().cancel();
-        }catch(NullPointerException e){
-        	Log.e("ActivityRecognitionHelper", "mDetectionRequester Null Pointer Exception");
-        }
-    }
-    
-    /**
-     * Verify that Google Play services is available before making a request.
-     *
-     * @return true if Google Play services is available, otherwise false
-     */
-    
     private boolean servicesConnected() {
+    	// Check that Google Play services is available
+    	int resultCode =
+    			GooglePlayServicesUtil.
+    			isGooglePlayServicesAvailable(mActivity);
+    	// If Google Play services is available
+    	if (ConnectionResult.SUCCESS == resultCode) {
+    		// In debug mode, log the status
+    		Log.d("Activity Recognition",
+    				"Google Play services is available.");
+    		// Continue
+    		return true;
+    		// Google Play services was not available for some reason
+    	} else {
+    		// Get the error dialog from Google Play services
+    		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
+    				resultCode,
+    				mActivity,
+    				CONNECTION_FAILURE_RESOLUTION_REQUEST);
 
-        // Check that Google Play services is available
-        int resultCode =
-                GooglePlayServicesUtil.isGooglePlayServicesAvailable(mActivity);
+    		// If Google Play services can provide an error dialog
+    		if (errorDialog != null) {
+    			// Create a new DialogFragment for the error dialog
+    			ErrorDialogFragment errorFragment =
+    					new ErrorDialogFragment();
+    			// Set the dialog in the DialogFragment
+    			errorFragment.setDialog(errorDialog);
+    			// Show the error dialog in the DialogFragment
+    			errorFragment.show(
+    					mActivity.getSupportFragmentManager(),
+    					"Activity Recognition");
+    		}
+    		return false;
+    	}
+    }
 
-        // If Google Play services is available
-        if (ConnectionResult.SUCCESS == resultCode) {
-
-            // In debug mode, log the status
-            Log.d(ActivityUtils.APPTAG, mActivity.getString(R.string.play_services_available));
-
-            // Continue
-            return true;
-
-        // Google Play services was not available for some reason
+	@Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        // Turn off the request flag
+        mInProgress = false;
+        /*
+         * If the error has a resolution, start a Google Play services
+         * activity to resolve it.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                connectionResult.startResolutionForResult(
+                        mActivity,
+                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            } catch (SendIntentException e) {
+                // Log the error
+                e.printStackTrace();
+            }
+        // If no resolution is available, display an error dialog
         } else {
+            // Get the error code
+            int errorCode = connectionResult.getErrorCode();
+            // Get the error dialog from Google Play services
+            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
+                    errorCode,
+                    mActivity,
+                    CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            // If Google Play services can provide an error dialog
+            if (errorDialog != null) {
+                // Create a new DialogFragment for the error dialog
+                ErrorDialogFragment errorFragment =
+                        new ErrorDialogFragment();
+                // Set the dialog in the DialogFragment
+                errorFragment.setDialog(errorDialog);
+                // Show the error dialog in the DialogFragment
+                errorFragment.show(
+                        mActivity.getSupportFragmentManager(),
+                        "Activity Recognition");
+            }
+        }
+    }
 
-            // Display an error dialog
-            GooglePlayServicesUtil.getErrorDialog(resultCode, mActivity, 0).show();
-            return false;
+	@Override
+	public void onConnected(Bundle dataBundle) {
+		switch (mRequestType) {
+		case START :
+			/*
+			 * Request activity recognition updates using the
+			 * preset detection interval and PendingIntent.
+			 * This call is synchronous.
+			 */
+			mActivityRecognitionClient.requestActivityUpdates(
+					DETECTION_INTERVAL_MILLISECONDS,
+					mActivityRecognitionPendingIntent);
+			break;
+		case STOP :
+			mActivityRecognitionClient.removeActivityUpdates(
+					mActivityRecognitionPendingIntent);
+			break;
+		}
+		
+        /*
+         * Since the preceding call is synchronous, turn off the
+         * in progress flag and disconnect the client
+         */
+        mInProgress = false;
+        mActivityRecognitionClient.disconnect();
+    }
+
+	@Override
+	public void onDisconnected() {
+        // Turn off the request flag
+        mInProgress = false;
+        // Delete the client
+        mActivityRecognitionClient = null;
+    }
+	
+	/**
+     * Respond by requesting activity recognition updates.
+     */
+    public void startUpdates() {
+    	
+    	mRequestType = REQUEST_TYPE.START;
+    	
+    	// Check for Google Play services
+
+        if (!servicesConnected()) {
+            return;
+        }
+        // If a request is not already underway
+        if (!mInProgress) {
+            // Indicate that a request is in progress
+            mInProgress = true;
+            // Request a connection to Location Services
+            mActivityRecognitionClient.connect();
+        //
+        } else {
+            /*
+             * A request is already underway. You can handle
+             * this situation by disconnecting the client,
+             * re-setting the flag, and then re-trying the
+             * request.
+             */
+        }
+    }
+    
+
+
+    /**
+     * Respond by canceling updates.
+     */
+    public void stopUpdates() {
+    	mRequestType = REQUEST_TYPE.STOP;
+    	if (!servicesConnected()) {
+            return;
+        }
+        // If a request is not already underway
+        if (!mInProgress) {
+            // Indicate that a request is in progress
+            mInProgress = true;
+            // Request a connection to Location Services
+            mActivityRecognitionClient.connect();
+        //
+        } else {
+            /*
+             * A request is already underway. You can handle
+             * this situation by disconnecting the client,
+             * re-setting the flag, and then re-trying the
+             * request.
+             */
         }
     }
 }

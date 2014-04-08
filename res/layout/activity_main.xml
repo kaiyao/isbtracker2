@@ -27,14 +27,6 @@
         android:orientation="vertical"
         android:layout_below="@+id/stop_update_button">
 
-        <ListView
-            android:id="@+id/log_listview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true" >
-        </ListView>
-
     </RelativeLayout>
 
     <Button
@@ -43,25 +35,46 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:onClick="onStartUpdates"
+        android:onClick="startTracking"
         android:text="@string/start_updates" />
 
     <Button
         android:id="@+id/stop_update_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/start_update_button"
-        android:onClick="onStopUpdates"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/start_update_button"
+        android:onClick="stopTracking"
         android:text="@string/stop_updates" />
 
     <Button
-        android:id="@+id/log_location"
+        android:id="@+id/get_last_location"
+        style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/stop_update_button"
-        android:layout_toRightOf="@+id/start_update_button"
-        android:onClick="getLocation"
-        android:text="Log Location" />
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/start_update_button"
+        android:onClick="getLastLocation"
+        android:text="Last Loc" />
+
+    <Button
+        android:id="@+id/get_current_location"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/list_layout"
+        android:layout_toRightOf="@+id/get_last_location"
+        android:onClick="getCurrentLocation"
+        android:text="Curr Loc" />
+
+    <Button
+        android:id="@+id/get_periodic_location"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/stop_update_button"
+        android:layout_toRightOf="@+id/get_current_location"
+        android:onClick="getContinuousLocation"
+        android:text="Periodic Updates" />
 
 </RelativeLayout>
