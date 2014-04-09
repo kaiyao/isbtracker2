@@ -19,6 +19,10 @@ public class StateMachine {
 	    Elsewhere, PossiblyWaitingForBus, WaitingForBus, PossiblyOnBus, OnBus
 	}
 	
+	public enum DetectedType {
+		Location, Activity
+	}
+	
 	private static StateMachine theOne;
 	private State currentState;
 	
@@ -26,6 +30,9 @@ public class StateMachine {
 	
 	private ActivityRecognitionResult lastActivityDetected;
 	private Location lastLocationChangeDetected;
+	private DetectedType lastDetectedType;
+	private boolean continousLocationEnabled = false;
+	
 	private BusStops busStops;
 	
 	private State stateWhenPreviousCheck;
@@ -59,12 +66,14 @@ public class StateMachine {
 	
 	public void activityDetected(ActivityRecognitionResult result){
 		lastActivityDetected = result;
+		lastDetectedType = DetectedType.Activity;
 		checkStateChange();
 	}
 	
 	public void locationChanged(Location location){
 		lastLocationChangeDetected = location;
-		//checkStateChange();
+		lastDetectedType = DetectedType.Location;
+		checkStateChange();
 	}
 	
 	private Time getCurrentTime(){
@@ -73,39 +82,49 @@ public class StateMachine {
 		return t;
 	}
 	
-	
+	private boolean isMoving(int type) {
+        switch (type) {
+            // These types mean that the user is probably not moving
+            case DetectedActivity.STILL :
+            case DetectedActivity.TILTING :
+            case DetectedActivity.UNKNOWN :
+                return false;
+            default:
+                return true;
+        }
+    }
 	
 	public void checkStateChange(){
-		
-		locationHelper.getCurrentLocation();
-		
-		/*
-		
+				
 		if (stateWhenPreviousCheck != currentState) {
 			timeEnteredCurrentState = getCurrentTime();
-			stateWhenPreviousCheck = currentState;
-		}		
+		}
 		
 		if (currentState == State.Elsewhere) {			
 			
-			// Check current position			
-			locationHelper.getCurrentLocation();
-			
-			if (lastLocationChangeDetected != null) {
+			// Check current position
+			if (lastDetectedType == DetectedType.Activity) {
+				if (isMoving(lastActivityDetected.getMostProbableActivity().getType())){
+					locationHelper.getCurrentLocation();
+				}				
+			}else{
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
 				
 				// if position is near bus stop, change state
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= DISTANCE_LIMIT) {
-					currentState = State.PossiblyWaitingForBus;
-					checkStateChange();
+					currentState = State.PossiblyWaitingForBus;					
 				}
 			}
+			
 		}else if (currentState == State.PossiblyWaitingForBus) {
 
 			// Check current position
 			// Set GPS to continuous poll
-			locationHelper.getContinuousLocation();
+			if (!continousLocationEnabled) {
+				locationHelper.getContinuousLocation();
+				continousLocationEnabled = true;
+			}
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -115,14 +134,13 @@ public class StateMachine {
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= DISTANCE_LIMIT && 
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					currentState = State.WaitingForBus;
-					checkStateChange();
 				}
 				
 				// position no longer near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT){ // Might have problem what if user runs after the bus?
 					currentState = State.Elsewhere;
 					locationHelper.stopContinousLocation();
-					checkStateChange();
+					continousLocationEnabled = false;
 				}
 			}
 		}else if (currentState == State.WaitingForBus) {
@@ -134,7 +152,6 @@ public class StateMachine {
 				// position is not near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT) {
 					currentState = State.PossiblyOnBus;
-					checkStateChange();
 				}
 			}
 		}else if (currentState == State.PossiblyOnBus) {
@@ -144,7 +161,6 @@ public class StateMachine {
 			for (DetectedActivity activity : activities){
 				if (activity.getType() == DetectedActivity.IN_VEHICLE && activity.getConfidence() > 50) {
 					currentState = State.OnBus;
-					checkStateChange();
 				}
 			}
 		}else if (currentState == State.OnBus) {
@@ -154,12 +170,14 @@ public class StateMachine {
 			for (DetectedActivity activity : activities){
 				if (activity.getType() == DetectedActivity.ON_FOOT && activity.getConfidence() > 80) {
 					currentState = State.Elsewhere;
-					checkStateChange();
 				}
 			}
 		}
 		
-		*/
+		if (stateWhenPreviousCheck != currentState) {
+			stateWhenPreviousCheck = currentState;
+			checkStateChange();
+		}
 	}
 	
 	
