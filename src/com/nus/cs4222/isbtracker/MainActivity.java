@@ -16,15 +16,25 @@
 
 package com.nus.cs4222.isbtracker;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.Spanned;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.TextView;
+
 import com.nus.cs4222.isbtracker.R;
 
 import android.support.v4.app.FragmentActivity;
@@ -42,6 +52,10 @@ public class MainActivity extends FragmentActivity{
 	
 	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationGetter;
+	private StateMachine stateMachine;
+	
+	private TextView currentStateTextView;
+	private TextView logTextView;
 	
 	/*
      * Holds activity recognition data, in the form of
@@ -65,6 +79,9 @@ public class MainActivity extends FragmentActivity{
 
         // Set the main layout
         setContentView(R.layout.activity_main);
+        
+        currentStateTextView = (TextView) findViewById(R.id.current_state_textview);
+        logTextView = (TextView) findViewById(R.id.log_textview);
         
     }
 
@@ -145,8 +162,50 @@ public class MainActivity extends FragmentActivity{
     }
     
     public void startTracking(View v){
-    	Log.v("MainActivity", "Start Tracking");
-    	StateMachine.getInstance(this);
+    	Log.v("MainActivity", "Start Tracking");    	
+    	final StateMachine stateMachine = StateMachine.getInstance(this);
+    	stateMachine.setListener(new StateMachineListener(){
+
+			@Override
+			public void onStateMachineChanged() {
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						switch(stateMachine.getCurrentState()){
+						case Elsewhere:
+							currentStateTextView.setText("Elsewhere");
+							break;
+						case OnBus:
+							currentStateTextView.setText("On Bus");
+							break;
+						case PossiblyOnBus:
+							currentStateTextView.setText("Possibly On Bus");
+							break;
+						case PossiblyWaitingForBus:
+							currentStateTextView.setText("Possibly Waiting For Bus");
+							break;
+						case WaitingForBus:
+							currentStateTextView.setText("Waiting For Bus");
+							break;
+						default:
+							break;
+						}
+					}
+				});
+			}
+
+			@Override
+			public void onLogMessage(final String message) {
+				new Handler(Looper.getMainLooper()).post(new Runnable() {
+					@Override
+					public void run() {
+						String timeString = new SimpleDateFormat("y-M-d H:m:s", Locale.US).format(new Date());
+						logTextView.setText(logTextView.getText() + "\n" + timeString + " " + message);
+					}
+				});
+			}
+    		
+    	});
     	activityRecognition = new ActivityRecognitionHelper(this);
     	activityRecognition.startUpdates();
     	locationGetter = new LocationHelper(this);

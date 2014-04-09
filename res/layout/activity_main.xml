@@ -77,4 +77,35 @@
         android:onClick="getContinuousLocation"
         android:text="Periodic Updates" />
 
+    <TextView
+        android:id="@+id/current_state_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/get_last_location"
+        android:text="Current State"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <ScrollView
+        android:id="@+id/scrollView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/current_state_textview" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/log_textview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="Log:"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
+
+        </LinearLayout>
+    </ScrollView>
+
 </RelativeLayout>
