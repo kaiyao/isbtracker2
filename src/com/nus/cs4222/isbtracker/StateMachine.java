@@ -162,6 +162,11 @@ public class StateMachine {
 				if (activity.getType() == DetectedActivity.IN_VEHICLE && activity.getConfidence() > 50) {
 					currentState = State.OnBus;
 				}
+				
+				// emergency bail out
+				if (activity.getType() == DetectedActivity.ON_FOOT && activity.getConfidence() > 80) {
+					currentState = State.Elsewhere;
+				}
 			}
 		}else if (currentState == State.OnBus) {
 			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();

@@ -21,7 +21,7 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
 	
     // Constants that define the activity detection interval
     public static final int MILLISECONDS_PER_SECOND = 1000;
-    public static final int DETECTION_INTERVAL_SECONDS = 2;
+    public static final int DETECTION_INTERVAL_SECONDS = 20;
     public static final int DETECTION_INTERVAL_MILLISECONDS =
             MILLISECONDS_PER_SECOND * DETECTION_INTERVAL_SECONDS;
     
