@@ -4,8 +4,11 @@ import java.util.List;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.text.format.Time;
+import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -61,7 +64,7 @@ public class StateMachine {
 	
 	public void locationChanged(Location location){
 		lastLocationChangeDetected = location;
-		checkStateChange();
+		//checkStateChange();
 	}
 	
 	private Time getCurrentTime(){
@@ -70,7 +73,13 @@ public class StateMachine {
 		return t;
 	}
 	
+	
+	
 	public void checkStateChange(){
+		
+		locationHelper.getCurrentLocation();
+		
+		/*
 		
 		if (stateWhenPreviousCheck != currentState) {
 			timeEnteredCurrentState = getCurrentTime();
@@ -102,14 +111,14 @@ public class StateMachine {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
 				
-				/* position is near bus stop and time more than one minute*/
+				// position is near bus stop and time more than one minute
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= DISTANCE_LIMIT && 
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					currentState = State.WaitingForBus;
 					checkStateChange();
 				}
 				
-				/*position no longer near bus stop */
+				// position no longer near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT){ // Might have problem what if user runs after the bus?
 					currentState = State.Elsewhere;
 					locationHelper.stopContinousLocation();
@@ -122,7 +131,7 @@ public class StateMachine {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
 			
-				/* position is not near bus stop*/
+				// position is not near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT) {
 					currentState = State.PossiblyOnBus;
 					checkStateChange();
@@ -131,7 +140,7 @@ public class StateMachine {
 		}else if (currentState == State.PossiblyOnBus) {
 			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
 			
-			/* accelerometer indicates vehicle movement */
+			// accelerometer indicates vehicle movement
 			for (DetectedActivity activity : activities){
 				if (activity.getType() == DetectedActivity.IN_VEHICLE && activity.getConfidence() > 50) {
 					currentState = State.OnBus;
@@ -141,7 +150,7 @@ public class StateMachine {
 		}else if (currentState == State.OnBus) {
 			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
 			
-			/* accelerometer indicates walking movement */
+			//accelerometer indicates walking movement
 			for (DetectedActivity activity : activities){
 				if (activity.getType() == DetectedActivity.ON_FOOT && activity.getConfidence() > 80) {
 					currentState = State.Elsewhere;
@@ -150,7 +159,7 @@ public class StateMachine {
 			}
 		}
 		
-		
+		*/
 	}
 	
 	

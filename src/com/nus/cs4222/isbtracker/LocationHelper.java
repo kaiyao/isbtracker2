@@ -4,6 +4,8 @@ import android.app.Dialog;
 import android.content.IntentSender;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -230,8 +232,28 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         }
     }
     
-    // Location stuff    
-    public void getCurrentLocation() {
+    // We need to do this so that the location request
+ 	// is not made on the IntentService thread (when activity response is received)...
+ 	// which is killed after the processing
+ 	public Handler getLocationHandler = new Handler(){
+
+ 		@Override
+ 		public void handleMessage(Message msg) {
+ 			
+ 			if (msg.what == 1) {
+ 				getCurrentLocationInHandler();
+ 			}else if (msg.what == 2) {
+ 				getContinuousLocationInHandler();
+ 			}
+ 		}
+ 		
+ 	};
+ 	
+ 	public void getCurrentLocation() {
+ 		getLocationHandler.sendEmptyMessage(1);
+ 	}
+    
+ 	private void getCurrentLocationInHandler() {
 
         // If Google Play Services is available
         if (servicesConnected()) {
@@ -256,8 +278,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         	
         }
     }
+ 	
+ 	public void getContinuousLocation() {
+ 		getLocationHandler.sendEmptyMessage(2);
+ 	}
     
-    public void getContinuousLocation() {
+    private void getContinuousLocationInHandler() {
 
         // If Google Play Services is available
         if (servicesConnected()) {

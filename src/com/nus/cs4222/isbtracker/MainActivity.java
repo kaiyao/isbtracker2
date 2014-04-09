@@ -149,14 +149,14 @@ public class MainActivity extends FragmentActivity{
     	StateMachine.getInstance(this);
     	activityRecognition = new ActivityRecognitionHelper(this);
     	activityRecognition.startUpdates();
-    	//locationGetter = new LocationHelper(this);
+    	locationGetter = new LocationHelper(this);
     	
     }
     
     public void stopTracking(View v){
     	Log.v("MainActivity", "Stop Tracking");
     	activityRecognition.stopUpdates();
-    	//locationGetter.stopContinousLocation();
+    	locationGetter.stopContinousLocation();
     }
     
     public void getLastLocation(View v) {    	
