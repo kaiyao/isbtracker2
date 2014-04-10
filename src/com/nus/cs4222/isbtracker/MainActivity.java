@@ -176,7 +176,11 @@ public class MainActivity extends FragmentActivity{
 					@Override
 					public void run() {
 						String timeString = new SimpleDateFormat("y-M-d H:m:s", Locale.US).format(new Date());
-						logTextView.setText(logTextView.getText() + "\n" + timeString + " " + message);
+						String desiredText = logTextView.getText() + "\n" + timeString + " " + message;
+						if (desiredText.length() > 5000) {
+							desiredText = desiredText.substring(desiredText.length() - 5000);
+						}
+						logTextView.setText(desiredText);
 					}
 				});
 			}
