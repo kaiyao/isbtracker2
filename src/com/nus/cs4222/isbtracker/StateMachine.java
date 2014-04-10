@@ -31,7 +31,7 @@ public class StateMachine {
 	private ActivityRecognitionResult lastActivityDetected;
 	private Location lastLocationChangeDetected;
 	private DetectedType lastDetectedType;
-	private boolean continousLocationEnabled = false;
+	private boolean continuousLocationEnabled = false;
 	
 	private BusStops busStops;
 	
@@ -131,6 +131,11 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is elsewhere");
 			
+			if (continuousLocationEnabled) {
+				locationHelper.stopContinousLocation();
+				continuousLocationEnabled = false;
+			}
+			
 			// Check current position
 			if (lastDetectedType == DetectedType.Activity) {
 				mListener.onLogMessage("Detected activity");
@@ -159,10 +164,10 @@ public class StateMachine {
 			// Check current position
 			// Set GPS to continuous poll
 			mListener.onLogMessage("Checking if continous poll mode");
-			if (!continousLocationEnabled) {
+			if (!continuousLocationEnabled) {
 				mListener.onLogMessage("Continous location not enabled, enabling...");
 				locationHelper.getContinuousLocation();
-				continousLocationEnabled = true;
+				continuousLocationEnabled = true;
 			}
 			
 			if (lastLocationChangeDetected != null) {
@@ -182,8 +187,6 @@ public class StateMachine {
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
-					locationHelper.stopContinousLocation();
-					continousLocationEnabled = false;
 				}
 			}
 		}else if (currentState == State.WaitingForBus) {
