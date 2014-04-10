@@ -25,6 +25,8 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     public static final int DETECTION_INTERVAL_MILLISECONDS =
             MILLISECONDS_PER_SECOND * DETECTION_INTERVAL_SECONDS;
     
+    private int mDetectionInterval = DETECTION_INTERVAL_MILLISECONDS;
+    
     // Store the PendingIntent used to send activity recognition events back to the app
     private PendingIntent mActivityRecognitionPendingIntent;
     // Store the current activity recognition client
@@ -174,7 +176,7 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
 			 * This call is synchronous.
 			 */
 			mActivityRecognitionClient.requestActivityUpdates(
-					DETECTION_INTERVAL_MILLISECONDS,
+					mDetectionInterval,
 					mActivityRecognitionPendingIntent);
 			break;
 		case STOP :
@@ -201,8 +203,12 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
 	
 	/**
      * Respond by requesting activity recognition updates.
+     * Note that startUpdates can be called repeatedly with a different detection interval
+     * to change the detection interval
      */
-    public void startUpdates() {
+    public void startUpdates(int detectionIntervalMilliseconds) {
+    	
+    	mDetectionInterval = detectionIntervalMilliseconds;
     	
     	mRequestType = REQUEST_TYPE.START;
     	

@@ -46,7 +46,6 @@ import android.support.v4.app.FragmentActivity;
  */
 public class MainActivity extends FragmentActivity{
 	
-	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationGetter;
 	private StateMachine stateMachine;
 	
@@ -182,17 +181,16 @@ public class MainActivity extends FragmentActivity{
 				});
 			}
     		
-    	});
-    	activityRecognition = new ActivityRecognitionHelper(this);
-    	activityRecognition.startUpdates();
+    	});    	
+    	
+    	stateMachine.startTracking();
     	locationGetter = new LocationHelper(this);
     	
     }
     
     public void stopTracking(View v){
     	Log.v("MainActivity", "Stop Tracking");
-    	activityRecognition.stopUpdates();
-    	locationGetter.stopContinousLocation();
+    	stateMachine.stopTracking();
     }
     
     public void getLastLocation(View v) {    	

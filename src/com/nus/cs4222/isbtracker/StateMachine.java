@@ -15,6 +15,12 @@ import com.google.android.gms.location.DetectedActivity;
 
 public class StateMachine {
 	
+	public static final int ACTIVTY_DETECTION_INTERVAL_LONG = 20000;
+	public static final int ACTIVTY_DETECTION_INTERVAL_SHORT = 2000;
+	
+	public static final int VEHICLE_MIN_SPEED_KPH = 20;
+	public static final int VEHICLE_MIN_SPEED_MPS = VEHICLE_MIN_SPEED_KPH * 1000 / 3600;
+	
 	public enum State {
 	    Elsewhere, PossiblyWaitingForBus, WaitingForBus, PossiblyOnBus, OnBus
 	}
@@ -32,12 +38,14 @@ public class StateMachine {
 	private Location lastLocationChangeDetected;
 	private DetectedType lastDetectedType;
 	private boolean continuousLocationEnabled = false;
+	private int lastUsedActivityDetectionInterval = 0;
 	
 	private BusStops busStops;
 	
 	private State stateWhenPreviousCheck;
 	private Time timeEnteredCurrentState;
 	
+	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationHelper;
 	
 	private StateMachineListener mListener;
@@ -96,6 +104,17 @@ public class StateMachine {
         }
     }
 	
+	private int confidenceForActivity(ActivityRecognitionResult lastActivityDetected, int type) {
+		List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
+		for (DetectedActivity activity : activities){
+			mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
+			if (activity.getType() == type) {
+				return activity.getConfidence();
+			}
+		}
+		return 0;
+    }
+	
 	/**
      * Map detected activity types to strings
      *
@@ -136,6 +155,11 @@ public class StateMachine {
 				continuousLocationEnabled = false;
 			}
 			
+			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_LONG){
+				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_LONG;
+				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_LONG);				
+			}
+			
 			// Check current position
 			if (lastDetectedType == DetectedType.Activity) {
 				mListener.onLogMessage("Detected activity");
@@ -170,6 +194,11 @@ public class StateMachine {
 				continuousLocationEnabled = true;
 			}
 			
+			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
+				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
+				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
+			}
+			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
@@ -181,8 +210,12 @@ public class StateMachine {
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					mListener.onLogMessage("position is near bus stop and time more than one minute");
 					currentState = State.WaitingForBus;
-				}
-				
+				}else
+				// vehicle speed is fast or movement detected
+				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+					mListener.onLogMessage("vehicle motion or speed detected");
+					currentState = State.PossiblyOnBus;
+				} else				
 				// position no longer near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
@@ -199,12 +232,22 @@ public class StateMachine {
 				continuousLocationEnabled = true;
 			}
 			
+			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
+				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
+				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
+			}
+			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
 				
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 			
+				// vehicle speed is fast or movement detected
+				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+					mListener.onLogMessage("vehicle motion or speed detected");
+					currentState = State.PossiblyOnBus;
+				}else
 				// position is not near bus stop
 				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT) {
 					currentState = State.PossiblyOnBus;
@@ -220,20 +263,21 @@ public class StateMachine {
 				continuousLocationEnabled = true;
 			}
 			
-			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
+			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
+				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
+				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
+			}
 			
 			// accelerometer indicates vehicle movement
-			for (DetectedActivity activity : activities){
-				mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
-				if (activity.getType() == DetectedActivity.IN_VEHICLE && activity.getConfidence() > 50) {
-					currentState = State.OnBus;
-				}
-				
-				// emergency bail out
-				if (activity.getType() == DetectedActivity.ON_FOOT && activity.getConfidence() > 80) {
-					mListener.onLogMessage("Walking detected! Emergency bail out!");
-					currentState = State.Elsewhere;
-				}
+			if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+				mListener.onLogMessage("vehicle motion or speed detected");
+				currentState = State.OnBus;
+			}
+			
+			// emergency bail out
+			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
+				mListener.onLogMessage("Walking detected! Emergency bail out!");
+				currentState = State.Elsewhere;
 			}
 		}else if (currentState == State.OnBus) {
 			
@@ -245,14 +289,15 @@ public class StateMachine {
 				continuousLocationEnabled = true;
 			}
 			
-			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
+			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
+				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
+				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
+			}
 			
 			//accelerometer indicates walking movement
-			for (DetectedActivity activity : activities){
-				mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
-				if (activity.getType() == DetectedActivity.ON_FOOT && activity.getConfidence() > 80) {
-					currentState = State.Elsewhere;
-				}
+			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
+				mListener.onLogMessage("Walking detected. State changing to elsewhere.");
+				currentState = State.Elsewhere;
 			}
 		}
 		
@@ -274,6 +319,18 @@ public class StateMachine {
 		this.mListener = mListener;
 	}
 	
+	public void startTracking() {
+		activityRecognition.startUpdates(20000);
+	}
+	
+	public void stopTracking() {
+		if (activityRecognition != null) {
+			activityRecognition.stopUpdates();
+		}
+		if (locationHelper != null) {
+			locationHelper.stopContinousLocation();
+		}
+	}
 	
 	
 }
