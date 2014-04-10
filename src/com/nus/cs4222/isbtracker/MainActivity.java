@@ -24,15 +24,11 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Spanned;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import com.nus.cs4222.isbtracker.R;
@@ -56,12 +52,6 @@ public class MainActivity extends FragmentActivity{
 	
 	private TextView currentStateTextView;
 	private TextView logTextView;
-	
-	/*
-     * Holds activity recognition data, in the form of
-     * strings that can contain markup
-     */
-    private ArrayAdapter<Spanned> mStatusAdapter;
 
     /*
      *  Intent filter for incoming broadcasts from the
@@ -115,24 +105,9 @@ public class MainActivity extends FragmentActivity{
 
             // Clear the log display and remove the log files
             case R.id.menu_item_clearlog:
-                // Clear the list adapter
-                mStatusAdapter.clear();
-
-                // Update the ListView from the empty adapter
-                mStatusAdapter.notifyDataSetChanged();
-
-                // Remove log files
-                /*if (!mLogFile.removeLogFiles()) {
-                    Log.e(ActivityUtils.APPTAG, getString(R.string.log_file_deletion_error));
-
-                // Display the results to the user
-                } else {
-
-                    Toast.makeText(
-                            this,
-                            R.string.logs_deleted,
-                            Toast.LENGTH_LONG).show();
-                }*/
+                
+            	logTextView.setText("Log:");
+            	
                 // Continue by passing true to the menu handler
                 return true;
 
@@ -141,6 +116,8 @@ public class MainActivity extends FragmentActivity{
 
                 // Update the ListView from log files
                 //updateActivityHistory();
+            	
+            	logTextView.setText(logTextView.getText() + "\nMenu item does nothing");
 
                 // Continue by passing true to the menu handler
                 return true;
@@ -163,7 +140,7 @@ public class MainActivity extends FragmentActivity{
     
     public void startTracking(View v){
     	Log.v("MainActivity", "Start Tracking");    	
-    	final StateMachine stateMachine = StateMachine.getInstance(this);
+    	stateMachine = StateMachine.getInstance(this);
     	stateMachine.setListener(new StateMachineListener(){
 
 			@Override
