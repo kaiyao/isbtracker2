@@ -193,6 +193,12 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is waiting for bus");
 			
+			if (!continuousLocationEnabled) {
+				mListener.onLogMessage("Continous location not enabled, enabling...");
+				locationHelper.getContinuousLocation();
+				continuousLocationEnabled = true;
+			}
+			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
@@ -207,6 +213,12 @@ public class StateMachine {
 		}else if (currentState == State.PossiblyOnBus) {
 			
 			mListener.onLogMessage("Current State is possibly on bus");
+			
+			if (!continuousLocationEnabled) {
+				mListener.onLogMessage("Continous location not enabled, enabling...");
+				locationHelper.getContinuousLocation();
+				continuousLocationEnabled = true;
+			}
 			
 			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
 			
@@ -226,6 +238,12 @@ public class StateMachine {
 		}else if (currentState == State.OnBus) {
 			
 			mListener.onLogMessage("Current State is on bus");
+			
+			if (!continuousLocationEnabled) {
+				mListener.onLogMessage("Continous location not enabled, enabling...");
+				locationHelper.getContinuousLocation();
+				continuousLocationEnabled = true;
+			}
 			
 			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
 			
