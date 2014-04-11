@@ -20,9 +20,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import android.content.IntentFilter;
+import android.content.*;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
@@ -46,7 +47,11 @@ import android.support.v4.app.FragmentActivity;
  */
 public class MainActivity extends FragmentActivity {
     private static final String LOGTAG = MainActivity.class.getName();
-	
+
+    private ServiceConnection mConnection;
+    private ScannerService mService;
+    private boolean mIsBound;
+
 	private LocationHelper locationGetter;
 	private StateMachine stateMachine;
 	
@@ -131,11 +136,33 @@ public class MainActivity extends FragmentActivity {
     @Override
     public void onStart() {
         super.onStart();
+
+        mConnection = new ServiceConnection() {
+           @Override
+           public void onServiceConnected(ComponentName name, IBinder service) {
+               ScannerService.ScannerBinder binder = (ScannerService.ScannerBinder) service;
+               mService = binder.getService();
+               mIsBound = true;
+               Log.d(LOGTAG, "Service connected");
+           }
+
+           @Override
+           public void onServiceDisconnected(ComponentName name) {
+               mIsBound = false;
+               Log.d(LOGTAG, "Service disconnected");
+           }
+        };
+
+        // Bind to service
+        Intent intent = new Intent(this, ScannerService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
+
+        unbindService(mConnection);
     }
     
     public void startTracking(View v){
