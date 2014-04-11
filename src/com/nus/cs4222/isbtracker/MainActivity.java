@@ -44,7 +44,8 @@ import android.support.v4.app.FragmentActivity;
  * An IntentService receives activity detection updates in the background
  * so that detection can continue even if the Activity is not visible.
  */
-public class MainActivity extends FragmentActivity{
+public class MainActivity extends FragmentActivity {
+    private static final String LOGTAG = MainActivity.class.getName();
 	
 	private LocationHelper locationGetter;
 	private StateMachine stateMachine;
@@ -138,7 +139,7 @@ public class MainActivity extends FragmentActivity{
     }
     
     public void startTracking(View v){
-    	Log.v("MainActivity", "Start Tracking");    	
+    	Log.v(LOGTAG, "Start Tracking");
     	stateMachine = StateMachine.getInstance(this);
     	stateMachine.setListener(new StateMachineListener(){
 
@@ -193,7 +194,7 @@ public class MainActivity extends FragmentActivity{
     }
     
     public void stopTracking(View v){
-    	Log.v("MainActivity", "Stop Tracking");
+    	Log.v(LOGTAG, "Stop Tracking");
     	stateMachine.stopTracking();
     }
     
