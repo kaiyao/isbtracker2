@@ -183,8 +183,13 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     		s.locationChanged(location);
     	}
     	
-        
-        if (mSingleUpdateRequested) {
+    	// note continuous updates should take priority over single updates
+    	if (mUpdatesRequested){ // periodic updates
+    		mSingleUpdateRequested = false;
+            Log.d("CurrentLocation", "Getting results");            
+            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
+        }
+    	else if (mSingleUpdateRequested) {
             Log.d("CurrentLocation", "Getting results");            
             Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
         
@@ -195,10 +200,9 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                 mSingleUpdateRequested = false;
                 mLocationClient.removeLocationUpdates(this);
             }
-        }else{ // periodic updates
-            Log.d("CurrentLocation", "Getting results");            
-            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
         }
+        
+        
 
     }
     
