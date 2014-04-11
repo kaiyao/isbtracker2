@@ -19,6 +19,12 @@ public class ScannerService extends Service {
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(LOGTAG, "onStartCommand");
+        return Service.START_STICKY;
+    }
+
+    @Override
     public IBinder onBind(Intent intent) {
         mIsBound = true;
         Log.d(LOGTAG, "onBind");
