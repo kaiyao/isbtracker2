@@ -79,7 +79,7 @@ public class MainActivity extends FragmentActivity {
         
         currentStateTextView = (TextView) findViewById(R.id.current_state_textview);
         logTextView = (TextView) findViewById(R.id.log_textview);
-        
+
         ApplicationContext.getInstance().init(getApplicationContext());
         assert(getApplicationContext() == ApplicationContext.get());        
     }
@@ -157,8 +157,9 @@ public class MainActivity extends FragmentActivity {
            }
         };
 
-        // Bind to service
+        // Start and bind to service
         Intent intent = new Intent(this, ScannerService.class);
+        startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -168,7 +169,13 @@ public class MainActivity extends FragmentActivity {
 
         unbindService(mConnection);
     }
-    
+
+    public void stopService(View v) {
+        Intent intent = new Intent(this, ScannerService.class);
+        stopService(intent);
+        Log.d(LOGTAG, "Stop service");
+    }
+
     public void startTracking(View v){
     	Log.v(LOGTAG, "Start Tracking");
     	stateMachine = StateMachine.getInstance(this);

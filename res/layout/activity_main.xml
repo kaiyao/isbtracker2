@@ -19,7 +19,7 @@
 <RelativeLayout android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android">
+    android:orientation="vertical" xmlns:android="http://schemas.android.com/apk/res/android" android:clickable="true">
 
     <RelativeLayout android:id="@+id/list_layout"
         android:layout_width="match_parent"
@@ -107,5 +107,12 @@
 
         </LinearLayout>
     </ScrollView>
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop svc"
+            android:id="@+id/stop_svc_button"
+            android:layout_alignParentTop="true" android:layout_toRightOf="@+id/stop_update_button"
+            android:onClick="stopService"/>
 
 </RelativeLayout>
