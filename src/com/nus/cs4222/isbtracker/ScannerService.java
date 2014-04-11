@@ -7,7 +7,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class ScannerService extends Service {
-    private static final String LOGTAG = ScannerService.class.getName();
+    private static final String LOGTAG = ScannerService.class.getSimpleName();
 
     private final IBinder mBinder = new ScannerBinder();
     private boolean mIsBound;

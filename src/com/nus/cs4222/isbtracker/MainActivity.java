@@ -48,7 +48,7 @@ import android.support.v4.app.FragmentActivity;
  * so that detection can continue even if the Activity is not visible.
  */
 public class MainActivity extends FragmentActivity {
-    private static final String LOGTAG = MainActivity.class.getName();
+    private static final String LOGTAG = MainActivity.class.getSimpleName();
 
     private ServiceConnection mConnection;
     private ScannerService mService;
