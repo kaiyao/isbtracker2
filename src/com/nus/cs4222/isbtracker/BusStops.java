@@ -50,7 +50,7 @@ public class BusStops {
 				Location l = new Location("");
 				l.setLatitude(mLatitude);
 				l.setLongitude(mLongitude);
-				BusStop bs = new BusStop(mName, l);
+				BusStop bs = new BusStop(mName, l, 0);
 				listOfStops.add(bs);
 			}
 		} catch (IOException e1) {
