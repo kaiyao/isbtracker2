@@ -37,6 +37,7 @@
             </intent-filter>
         </activity>
         <service android:name="com.nus.cs4222.isbtracker.ActivityRecognitionIntentService"></service>
+        <service android:name=".ScannerService" android:label="Scanner Service"/>
         <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
 
     </application>

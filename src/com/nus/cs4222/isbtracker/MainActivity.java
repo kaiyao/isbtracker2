@@ -20,10 +20,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import android.content.IntentFilter;
+import android.content.*;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Menu;
@@ -46,8 +47,13 @@ import android.support.v4.app.FragmentActivity;
  * An IntentService receives activity detection updates in the background
  * so that detection can continue even if the Activity is not visible.
  */
-public class MainActivity extends FragmentActivity{
-	
+public class MainActivity extends FragmentActivity {
+    private static final String LOGTAG = MainActivity.class.getName();
+
+    private ServiceConnection mConnection;
+    private ScannerService mService;
+    private boolean mIsBound;
+
 	private LocationHelper locationGetter;
 	private StateMachine stateMachine;
 	
@@ -134,15 +140,37 @@ public class MainActivity extends FragmentActivity{
     @Override
     public void onStart() {
         super.onStart();
+
+        mConnection = new ServiceConnection() {
+           @Override
+           public void onServiceConnected(ComponentName name, IBinder service) {
+               ScannerService.ScannerBinder binder = (ScannerService.ScannerBinder) service;
+               mService = binder.getService();
+               mIsBound = true;
+               Log.d(LOGTAG, "Service connected");
+           }
+
+           @Override
+           public void onServiceDisconnected(ComponentName name) {
+               mIsBound = false;
+               Log.d(LOGTAG, "Service disconnected");
+           }
+        };
+
+        // Bind to service
+        Intent intent = new Intent(this, ScannerService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
+
+        unbindService(mConnection);
     }
     
     public void startTracking(View v){
-    	Log.v("MainActivity", "Start Tracking");    	
+    	Log.v(LOGTAG, "Start Tracking");
     	stateMachine = StateMachine.getInstance(this);
     	stateMachine.setListener(new StateMachineListener(){
 
@@ -197,7 +225,7 @@ public class MainActivity extends FragmentActivity{
     }
     
     public void stopTracking(View v){
-    	Log.v("MainActivity", "Stop Tracking");
+    	Log.v(LOGTAG, "Stop Tracking");
     	stateMachine.stopTracking();
     }
     
