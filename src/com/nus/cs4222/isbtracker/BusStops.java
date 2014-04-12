@@ -14,8 +14,7 @@ public class BusStops {
 	Context mContext;
 	List<BusStop> listOfStops;
 	
-	public BusStops(Context context){
-		mContext = context;
+	public BusStops(){
 		listOfStops = new ArrayList<BusStop>();
 		readStopsFromFile();		
 	}
@@ -37,9 +36,11 @@ public class BusStops {
 	
 	private void readStopsFromFile(){
 		try {
-			InputStreamReader is = new InputStreamReader(mContext.getAssets().open("NUS Bus Stops.csv"));
+			
+			Context context = ApplicationContext.get();
+			
+			InputStreamReader is = new InputStreamReader(context.getAssets().open("NUS Bus Stops.csv"));
 			BufferedReader reader = new BufferedReader(is);
-			reader.readLine();
 			String line;
 			while ((line = reader.readLine()) != null) {
 				String[] lineParts = line.split(",");
