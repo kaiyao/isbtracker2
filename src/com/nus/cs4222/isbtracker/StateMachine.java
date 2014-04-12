@@ -12,6 +12,7 @@ import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
+import com.nus.cs4222.isbtracker.route.BusRoutes;
 
 public class StateMachine {
 	
@@ -41,6 +42,7 @@ public class StateMachine {
 	private int lastUsedActivityDetectionInterval = 0;
 	
 	private BusStops busStops;
+	private BusRoutes busRoutes;
 	
 	private State stateWhenPreviousCheck;
 	private Time timeEnteredCurrentState;
@@ -50,7 +52,7 @@ public class StateMachine {
 	
 	private StateMachineListener mListener;
 	
-	private final float DISTANCE_LIMIT = 50.0f;
+	private final float DISTANCE_LIMIT = 50.0f;	
 	
 	private StateMachine(FragmentActivity context){
 		mActivity = context;
@@ -60,6 +62,7 @@ public class StateMachine {
 		timeEnteredCurrentState = getCurrentTime();
 		
 		busStops = new BusStops();
+		busRoutes = new BusRoutes();
 		locationHelper = new LocationHelper(mActivity);
 	}
 	
@@ -219,7 +222,7 @@ public class StateMachine {
 					currentState = State.PossiblyOnBus;
 				} else				
 				// position no longer near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT){ // Might have problem what if user runs after the bus?
+				if (nearestStop.getDistanceFromLocation(currentPosition) > 50){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
 				}
@@ -250,9 +253,10 @@ public class StateMachine {
 					mListener.onLogMessage("vehicle motion or speed detected");
 					currentState = State.PossiblyOnBus;
 				}else
-				// position is not near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > DISTANCE_LIMIT) {
-					currentState = State.PossiblyOnBus;
+				// position no longer near bus stop
+				if (nearestStop.getDistanceFromLocation(currentPosition) > 50){ // Might have problem what if user runs after the bus?
+					mListener.onLogMessage("position no longer near bus stop");
+					currentState = State.Elsewhere;
 				}
 			}
 		}else if (currentState == State.PossiblyOnBus) {
@@ -271,14 +275,19 @@ public class StateMachine {
 			}
 			
 			// accelerometer indicates vehicle movement
-			if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+			if ((confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || 
+					lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS) &&
+					Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000)  {
 				mListener.onLogMessage("vehicle motion or speed detected");
 				currentState = State.OnBus;
 			}
 			
 			// emergency bail out
 			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
-				mListener.onLogMessage("Walking detected! Emergency bail out!");
+				mListener.onLogMessage("Walking detected. Bailing out. State changing to elsewhere.");
+				currentState = State.Elsewhere;
+			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20)  {
+				mListener.onLogMessage("Too far from road ("+busRoutes.getDistanceFromRoutes(lastLocationChangeDetected)+"m). State changing to elsewhere.");
 				currentState = State.Elsewhere;
 			}
 		}else if (currentState == State.OnBus) {
@@ -299,6 +308,9 @@ public class StateMachine {
 			//accelerometer indicates walking movement
 			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
 				mListener.onLogMessage("Walking detected. State changing to elsewhere.");
+				currentState = State.Elsewhere;
+			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20)  {
+				mListener.onLogMessage("Too far from road ("+busRoutes.getDistanceFromRoutes(lastLocationChangeDetected)+"m). State changing to elsewhere.");
 				currentState = State.Elsewhere;
 			}
 		}
