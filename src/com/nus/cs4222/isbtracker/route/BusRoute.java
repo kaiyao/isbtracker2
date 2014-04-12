@@ -3,7 +3,6 @@ package com.nus.cs4222.isbtracker.route;
 import java.util.List;
 
 import android.location.Location;
-import android.util.Log;
 
 public class BusRoute {
 	
@@ -17,24 +16,24 @@ public class BusRoute {
 	
 	public float getDistanceFromRoute(Location point) {
 		double minDistance = Float.POSITIVE_INFINITY;
-		Location mP1 = null, mP2 = null;
+		//Location mP1 = null, mP2 = null;
 		
 		Location p1 = null;
 		for(Location p2 : mRoutePoints) {
 			if (p1 != null) {				
 				
 				PointToLine p2l = new PointToLine(p1, p2, point);
-				Log.v("", "("+p1.getLatitude()+","+p1.getLongitude()+") ("+p2.getLatitude()+","+p2.getLongitude()+") "+p2l);
+				//Log.v("", "("+p1.getLatitude()+","+p1.getLongitude()+") ("+p2.getLatitude()+","+p2.getLongitude()+") "+p2l);
 				if (minDistance > p2l.getDistance() && p2l.getDistanceAlongLine() >= 0 && p2l.getDistanceAlongLine() <= p1.distanceTo(p2)) {
 					minDistance = p2l.getDistance();
-					mP1 = p1;
-					mP2 = p2;
+					//mP1 = p1;
+					//mP2 = p2;
 				}
 			}
 			p1 = p2;
 		}
 		
-		Log.v("Min", "("+mP1.getLatitude()+","+mP1.getLongitude()+") ("+mP2.getLatitude()+","+mP2.getLongitude()+") ("+point.getLatitude()+","+point.getLongitude()+") "+minDistance);
+		//Log.v("Min", "("+mP1.getLatitude()+","+mP1.getLongitude()+") ("+mP2.getLatitude()+","+mP2.getLongitude()+") ("+point.getLatitude()+","+point.getLongitude()+") "+minDistance);
 		return (float) minDistance;
 	}
 	

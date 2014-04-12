@@ -40,7 +40,7 @@ public class BusRoutes {
 				
 				String[] lineParts = line.split(" ");
 				String name = lineParts[0].trim();
-				Log.v("",name);
+				//Log.v("",name);
 				
 				String[] lineParts2 = Arrays.copyOfRange(lineParts, 1, lineParts.length);
 				for (String pointStr : lineParts2) {
