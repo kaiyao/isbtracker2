@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.content.IntentFilter;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -32,6 +33,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.nus.cs4222.isbtracker.R;
+import com.nus.cs4222.isbtracker.route.BusRoutes;
 
 import android.support.v4.app.FragmentActivity;
 
@@ -201,6 +203,17 @@ public class MainActivity extends FragmentActivity{
     
     public void getLastLocation(View v) {    	
     	locationGetter.getLastLocation();
+    	
+    	/*
+    	Location l = new Location("");
+		l.setLatitude(1.293477);
+		l.setLongitude(103.781353);
+    	
+    	BusRoutes br = new BusRoutes();    	
+    	String message = "Distance: " + br.getDistanceFromRoutes(l);
+    	String desiredText = logTextView.getText() + "\n" + message;
+		logTextView.setText(desiredText);
+		*/
     }
     
     public void getCurrentLocation(View v) {

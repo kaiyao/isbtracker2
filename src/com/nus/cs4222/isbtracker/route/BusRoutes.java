@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import android.content.Context;
@@ -68,6 +69,21 @@ public class BusRoutes {
 	
 	public BusRoute getRouteWithName(String name){
 		return routes.get(name);
+	}
+	
+	public float getDistanceFromRoutes(Location point) {
+		float minDistance = Float.POSITIVE_INFINITY;
+		
+		Set<Entry<String, BusRoute>> entrySet = routes.entrySet();
+		for (Map.Entry<String, BusRoute> entry : entrySet) {
+			BusRoute route = entry.getValue();
+			float distance = route.getDistanceFromRoute(point);
+			if (distance < minDistance) {
+				minDistance = distance;
+			}
+		}
+	    
+	    return minDistance;
 	}
 
 }
