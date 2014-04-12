@@ -108,8 +108,10 @@ public class StateMachine {
 		List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
 		for (DetectedActivity activity : activities){
 			mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
+			
 			if (activity.getType() == type) {
 				return activity.getConfidence();
+				
 			}
 		}
 		return 0;
@@ -206,7 +208,7 @@ public class StateMachine {
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 				
 				// position is near bus stop and time more than one minute
-				if (nearestStop.getDistanceFromLocation(currentPosition) <= DISTANCE_LIMIT && 
+				if (nearestStop.getDistanceFromLocation(currentPosition) <= 20 && 
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					mListener.onLogMessage("position is near bus stop and time more than one minute");
 					currentState = State.WaitingForBus;
