@@ -59,7 +59,7 @@ public class StateMachine {
 		stateWhenPreviousCheck = State.Elsewhere;
 		timeEnteredCurrentState = getCurrentTime();
 		
-		busStops = new BusStops(mActivity);
+		busStops = new BusStops();
 		locationHelper = new LocationHelper(mActivity);
 	}
 	

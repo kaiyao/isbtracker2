@@ -72,6 +72,8 @@ public class MainActivity extends FragmentActivity{
         currentStateTextView = (TextView) findViewById(R.id.current_state_textview);
         logTextView = (TextView) findViewById(R.id.log_textview);
         
+        ApplicationContext.getInstance().init(getApplicationContext());
+        assert(getApplicationContext() == ApplicationContext.get());        
     }
 
     /*
