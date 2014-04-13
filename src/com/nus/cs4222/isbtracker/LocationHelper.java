@@ -1,7 +1,6 @@
 package com.nus.cs4222.isbtracker;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.content.IntentSender;
 import android.location.Location;
 import android.os.Bundle;
@@ -10,8 +9,6 @@ import android.os.Message;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
-import android.widget.Toast;
-
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -24,7 +21,7 @@ LocationListener,
 GooglePlayServicesClient.ConnectionCallbacks,
 GooglePlayServicesClient.OnConnectionFailedListener {
 	
-    private Context mContext;
+    private FragmentActivity mActivity;
 	
     // Global constants
     /*
@@ -67,7 +64,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     	// Check that Google Play services is available
     	int resultCode =
     			GooglePlayServicesUtil.
-    			isGooglePlayServicesAvailable(mContext);
+    			isGooglePlayServicesAvailable(mActivity);
     	// If Google Play services is available
     	if (ConnectionResult.SUCCESS == resultCode) {
     		// In debug mode, log the status
@@ -77,12 +74,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     		return true;
     		// Google Play services was not available for some reason
     	} else {
-    		
-    		/*
     		// Get the error dialog from Google Play services
     		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
     				resultCode,
-    				mContext,
+    				mActivity,
     				CONNECTION_FAILURE_RESOLUTION_REQUEST);
 
     		// If Google Play services can provide an error dialog
@@ -94,11 +89,9 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     			errorFragment.setDialog(errorDialog);
     			// Show the error dialog in the DialogFragment
     			errorFragment.show(
-    					mContext.getSupportFragmentManager(),
+    					mActivity.getSupportFragmentManager(),
     					"Location");
-    		}*/
-    		Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
-    		
+    		}
     		return false;
     	}
     }
@@ -132,33 +125,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
          * start a Google Play services activity that can resolve
          * error.
          */
-    	
         if (connectionResult.hasResolution()) {
-            /*try {
+            try {
                 // Start an Activity that tries to resolve the error
                 connectionResult.startResolutionForResult(
-                        mContext,
+                        mActivity,
                         CONNECTION_FAILURE_RESOLUTION_REQUEST);
-                //
-                // Thrown if Google Play services canceled the original
-                // PendingIntent
-                //
+                /*
+                * Thrown if Google Play services canceled the original
+                * PendingIntent
+                */
             } catch (IntentSender.SendIntentException e) {
                 // Log the error
                 e.printStackTrace();
-            }*/
-        	Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services (resolution may be available?)", Toast.LENGTH_SHORT).show();
+            }
         } else {
-        	/*
-            //
-            // If no resolution is available, display a dialog to the
-            // user with the error.
-            //
+            /*
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
         	int errorCode = connectionResult.getErrorCode();
             // Get the error dialog from Google Play services
             Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
                     errorCode,
-                    mContext,
+                    mActivity,
                     CONNECTION_FAILURE_RESOLUTION_REQUEST);
             // If Google Play services can provide an error dialog
             if (errorDialog != null) {
@@ -169,11 +159,9 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                 errorFragment.setDialog(errorDialog);
                 // Show the error dialog in the DialogFragment
                 errorFragment.show(
-                        mContext.getSupportFragmentManager(),
+                        mActivity.getSupportFragmentManager(),
                         "Location");
             }
-            */
-        	Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
         }
     }
     
@@ -199,11 +187,11 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     	if (mUpdatesRequested){ // periodic updates
     		mSingleUpdateRequested = false;
             Log.d("CurrentLocation", "Getting results");            
-            Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
+            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
         }
     	else if (mSingleUpdateRequested) {
             Log.d("CurrentLocation", "Getting results");            
-            Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
+            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
         
             mSingleUpdateResponseCount++;
             
@@ -218,14 +206,14 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
     }
     
-    public LocationHelper() {
-        mContext = ApplicationContext.get();
+    public LocationHelper(FragmentActivity activity) {
+        mActivity = activity;
         
         /*
          * Create a new location client, using the enclosing class to
          * handle callbacks.
          */
-        mLocationClient = new LocationClient(mContext, this, this);
+        mLocationClient = new LocationClient(mActivity, this, this);
         mLocationClient.connect();
         
         // Start with updates turned off
@@ -244,7 +232,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
             // Display the current location in the UI
             
-            Log.d("ISBTracker", "Current Location: "+LocationUtils.getLatLng(mContext, currentLocation));
+            Log.d("ISBTracker", "Current Location: "+LocationUtils.getLatLng(mActivity, currentLocation));
         }
     }
     

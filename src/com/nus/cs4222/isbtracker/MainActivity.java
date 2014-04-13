@@ -220,7 +220,7 @@ public class MainActivity extends FragmentActivity {
     	});    	
     	
     	stateMachine.startTracking();
-    	locationGetter = new LocationHelper();
+    	locationGetter = new LocationHelper(this);
     	
     }
     
@@ -232,16 +232,16 @@ public class MainActivity extends FragmentActivity {
     public void getLastLocation(View v) {    	
     	locationGetter.getLastLocation();
     	
-    	
+    	/*
     	Location l = new Location("");
-		l.setLatitude(  1.303520);
-		l.setLongitude(103.774413);
+		l.setLatitude(1.293477);
+		l.setLongitude(103.781353);
     	
     	BusRoutes br = new BusRoutes();    	
     	String message = "Distance: " + br.getDistanceFromRoutes(l);
     	String desiredText = logTextView.getText() + "\n" + message;
 		logTextView.setText(desiredText);
-		
+		*/
     }
     
     public void getCurrentLocation(View v) {
