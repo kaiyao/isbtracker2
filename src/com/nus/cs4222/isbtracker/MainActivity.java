@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.content.*;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -55,16 +54,9 @@ public class MainActivity extends FragmentActivity {
     private boolean mIsBound;
 
 	private LocationHelper locationGetter;
-	private StateMachine stateMachine;
 	
 	private TextView currentStateTextView;
 	private TextView logTextView;
-
-    /*
-     *  Intent filter for incoming broadcasts from the
-     *  IntentService.
-     */
-    IntentFilter mBroadcastFilter;
 
     /*
      * Set main UI layout, get a handle to the ListView for logs, and create the broadcast
@@ -152,6 +144,7 @@ public class MainActivity extends FragmentActivity {
 
            @Override
            public void onServiceDisconnected(ComponentName name) {
+               mService = null;
                mIsBound = false;
                Log.d(LOGTAG, "Service disconnected");
            }
@@ -168,6 +161,7 @@ public class MainActivity extends FragmentActivity {
         super.onStop();
 
         unbindService(mConnection);
+        mConnection = null;
     }
 
     public void stopService(View v) {
@@ -176,17 +170,19 @@ public class MainActivity extends FragmentActivity {
         Log.d(LOGTAG, "Stop service");
     }
 
-    public void startTracking(View v){
-    	Log.v(LOGTAG, "Start Tracking");
-    	stateMachine = StateMachine.getInstance(this);
-    	stateMachine.setListener(new StateMachineListener(){
+    public void startTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+        mService.startTracking(new StateMachineListener(){
 
 			@Override
-			public void onStateMachineChanged() {
+			public void onStateMachineChanged(final StateMachine.State state) {
 				new Handler(Looper.getMainLooper()).post(new Runnable() {
 					@Override
 					public void run() {
-						switch(stateMachine.getCurrentState()){
+						switch(state){
 						case Elsewhere:
 							currentStateTextView.setText("Elsewhere");
 							break;
@@ -223,17 +219,21 @@ public class MainActivity extends FragmentActivity {
 					}
 				});
 			}
-    		
-    	});    	
-    	
-    	stateMachine.startTracking();
+
+    	});
+
     	locationGetter = new LocationHelper(this);
-    	
+
+        Log.v(LOGTAG, "Start Tracking");
     }
     
-    public void stopTracking(View v){
-    	Log.v(LOGTAG, "Stop Tracking");
-    	stateMachine.stopTracking();
+    public void stopTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+    	mService.stopTracking();
+        Log.v(LOGTAG, "Stop Tracking");
     }
     
     public void getLastLocation(View v) {    	
