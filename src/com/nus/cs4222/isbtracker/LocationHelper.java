@@ -1,13 +1,12 @@
 package com.nus.cs4222.isbtracker;
 
-import android.app.Dialog;
-import android.content.IntentSender;
+import android.content.Context;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
@@ -20,17 +19,12 @@ public class LocationHelper implements
 LocationListener,
 GooglePlayServicesClient.ConnectionCallbacks,
 GooglePlayServicesClient.OnConnectionFailedListener {
+
+    public static final String LOCATION_HELPER_EXTRA_SUBJECT = "LocationHelper";
+    public static final String LOCATION_HELPER_LOCATION = "com.nus.cs4222.isbtracker.LocationHelper.location";
+
+    private Context mContext;
 	
-    private FragmentActivity mActivity;
-	
-    // Global constants
-    /*
-     * Define a request code to send to Google Play services
-     * This code is returned in Activity.onActivityResult
-     */
-    private final static int
-            CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-    
     // Define an object that holds accuracy and frequency parameters
     LocationRequest mLocationRequest;
     
@@ -40,31 +34,11 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     boolean mSingleUpdateRequested = false;
     int mSingleUpdateResponseCount = 0;
     
-    // Define a DialogFragment that displays the error dialog
-    public static class ErrorDialogFragment extends DialogFragment {
-        // Global field to contain the error dialog
-        private Dialog mDialog;
-        // Default constructor. Sets the dialog field to null
-        public ErrorDialogFragment() {
-            super();
-            mDialog = null;
-        }
-        // Set the dialog to display
-        public void setDialog(Dialog dialog) {
-            mDialog = dialog;
-        }
-        // Return a Dialog to the DialogFragment.
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            return mDialog;
-        }
-    }
-    
     private boolean servicesConnected() {
     	// Check that Google Play services is available
     	int resultCode =
     			GooglePlayServicesUtil.
-    			isGooglePlayServicesAvailable(mActivity);
+    			isGooglePlayServicesAvailable(mContext);
     	// If Google Play services is available
     	if (ConnectionResult.SUCCESS == resultCode) {
     		// In debug mode, log the status
@@ -74,24 +48,6 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     		return true;
     		// Google Play services was not available for some reason
     	} else {
-    		// Get the error dialog from Google Play services
-    		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
-    				resultCode,
-    				mActivity,
-    				CONNECTION_FAILURE_RESOLUTION_REQUEST);
-
-    		// If Google Play services can provide an error dialog
-    		if (errorDialog != null) {
-    			// Create a new DialogFragment for the error dialog
-    			ErrorDialogFragment errorFragment =
-    					new ErrorDialogFragment();
-    			// Set the dialog in the DialogFragment
-    			errorFragment.setDialog(errorDialog);
-    			// Show the error dialog in the DialogFragment
-    			errorFragment.show(
-    					mActivity.getSupportFragmentManager(),
-    					"Location");
-    		}
     		return false;
     	}
     }
@@ -125,30 +81,30 @@ GooglePlayServicesClient.OnConnectionFailedListener {
          * start a Google Play services activity that can resolve
          * error.
          */
-        if (connectionResult.hasResolution()) {
+        /*if (connectionResult.hasResolution()) {
             try {
                 // Start an Activity that tries to resolve the error
                 connectionResult.startResolutionForResult(
-                        mActivity,
+                        mContext,
                         CONNECTION_FAILURE_RESOLUTION_REQUEST);
-                /*
+                *//*
                 * Thrown if Google Play services canceled the original
                 * PendingIntent
-                */
+                *//*
             } catch (IntentSender.SendIntentException e) {
                 // Log the error
                 e.printStackTrace();
             }
         } else {
-            /*
+            *//*
              * If no resolution is available, display a dialog to the
              * user with the error.
-             */
+             *//*
         	int errorCode = connectionResult.getErrorCode();
             // Get the error dialog from Google Play services
             Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
                     errorCode,
-                    mActivity,
+                    mContext,
                     CONNECTION_FAILURE_RESOLUTION_REQUEST);
             // If Google Play services can provide an error dialog
             if (errorDialog != null) {
@@ -159,10 +115,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
                 errorFragment.setDialog(errorDialog);
                 // Show the error dialog in the DialogFragment
                 errorFragment.show(
-                        mActivity.getSupportFragmentManager(),
+                        mContext.getSupportFragmentManager(),
                         "Location");
             }
-        }
+        }*/
     }
     
     // Define the callback method that receives location updates
@@ -177,21 +133,18 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         // In the UI, set the latitude and longitude to the value received
         mLatLng.setText(LocationUtils.getLatLng(this, location));
         */
-    	
-    	StateMachine s = StateMachine.getReadyInstance();
-    	if (s != null) {
-    		s.locationChanged(location);
-    	}
-    	
+
+        reportNewLocation(location);
+
     	// note continuous updates should take priority over single updates
     	if (mUpdatesRequested){ // periodic updates
     		mSingleUpdateRequested = false;
             Log.d("CurrentLocation", "Getting results");            
-            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
+            Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
         }
     	else if (mSingleUpdateRequested) {
             Log.d("CurrentLocation", "Getting results");            
-            Log.i("LocationChanged", LocationUtils.getLatLng(mActivity, location));
+            Log.i("LocationChanged", LocationUtils.getLatLng(mContext, location));
         
             mSingleUpdateResponseCount++;
             
@@ -206,14 +159,14 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
     }
     
-    public LocationHelper(FragmentActivity activity) {
-        mActivity = activity;
+    public LocationHelper(Context context) {
+        mContext = context;
         
         /*
          * Create a new location client, using the enclosing class to
          * handle callbacks.
          */
-        mLocationClient = new LocationClient(mActivity, this, this);
+        mLocationClient = new LocationClient(mContext, this, this);
         mLocationClient.connect();
         
         // Start with updates turned off
@@ -232,7 +185,7 @@ GooglePlayServicesClient.OnConnectionFailedListener {
 
             // Display the current location in the UI
             
-            Log.d("ISBTracker", "Current Location: "+LocationUtils.getLatLng(mActivity, currentLocation));
+            Log.d("ISBTracker", "Current Location: "+LocationUtils.getLatLng(mContext, currentLocation));
         }
     }
     
@@ -317,4 +270,10 @@ GooglePlayServicesClient.OnConnectionFailedListener {
     	mLocationClient.removeLocationUpdates(this);
     }
 
+    private void reportNewLocation(Location location) {
+        Intent intent = new Intent(ScannerService.UPDATE_TOPIC);
+        intent.putExtra(Intent.EXTRA_SUBJECT, LOCATION_HELPER_EXTRA_SUBJECT);
+        intent.putExtra(LOCATION_HELPER_LOCATION, location);
+        LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+    }
 }

@@ -4,11 +4,8 @@ import java.util.List;
 
 import android.content.Context;
 import android.location.Location;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.app.FragmentActivity;
 import android.text.format.Time;
-import android.util.Log;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -29,10 +26,9 @@ public class StateMachine {
 		Location, Activity
 	}
 	
-	private static StateMachine theOne;
 	private State currentState;
 	
-	private FragmentActivity mActivity;
+	private Context mContext;
 	
 	private ActivityRecognitionResult lastActivityDetected;
 	private Location lastLocationChangeDetected;
@@ -49,29 +45,22 @@ public class StateMachine {
 	private LocationHelper locationHelper;
 	
 	private StateMachineListener mListener;
+
+    private boolean mIsTracking;
 	
 	private final float DISTANCE_LIMIT = 50.0f;
 	
-	private StateMachine(FragmentActivity context){
-		mActivity = context;
+	public StateMachine(Context context){
+		mContext = context;
 		
 		currentState = State.Elsewhere;
 		stateWhenPreviousCheck = State.Elsewhere;
 		timeEnteredCurrentState = getCurrentTime();
 		
-		busStops = new BusStops(mActivity);
-		locationHelper = new LocationHelper(mActivity);
-	}
-	
-	public static StateMachine getInstance(FragmentActivity context){
-		if (theOne == null){
-			theOne = new StateMachine(context);
-		}
-		return theOne;
-	}
-	
-	public static StateMachine getReadyInstance(){
-		return theOne;
+		busStops = new BusStops(mContext);
+		locationHelper = new LocationHelper(mContext);
+
+        mIsTracking = false;
 	}
 	
 	public void activityDetected(ActivityRecognitionResult result){
@@ -143,7 +132,7 @@ public class StateMachine {
 				
 		if (stateWhenPreviousCheck != currentState) {
 			timeEnteredCurrentState = getCurrentTime();
-			mListener.onStateMachineChanged();
+			mListener.onStateMachineChanged(currentState);
 		}
 		
 		if (currentState == State.Elsewhere) {	
@@ -320,8 +309,15 @@ public class StateMachine {
 	}
 	
 	public void startTracking() {
-        activityRecognition = new ActivityRecognitionHelper(mActivity);
+        activityRecognition = new ActivityRecognitionHelper(mContext);
 		activityRecognition.startUpdates(20000);
+
+        currentState = State.Elsewhere;
+        timeEnteredCurrentState = getCurrentTime();
+        stateWhenPreviousCheck = State.Elsewhere;
+        mListener.onStateMachineChanged(currentState);
+
+        mIsTracking = true;
 		mListener.onLogMessage("Start Tracking");
 	}
 	
@@ -333,7 +329,10 @@ public class StateMachine {
 		if (locationHelper != null) {
 			locationHelper.stopContinousLocation();
 		}
+        mIsTracking = false;
 	}
 	
-	
+	public boolean isTracking() {
+        return mIsTracking;
+    }
 }

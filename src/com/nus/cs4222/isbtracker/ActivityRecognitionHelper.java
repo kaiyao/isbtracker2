@@ -1,5 +1,7 @@
 package com.nus.cs4222.isbtracker;
 
+import android.content.Context;
+import android.support.v4.content.LocalBroadcastManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
@@ -16,8 +18,11 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 
 public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnectionFailedListener {
-	
-	private FragmentActivity mActivity;
+
+    public static final String ACTIVITY_RECOGNITION_EXTRA_SUBJECT = "ActivityRecognition";
+    public static final String ACTIVITY_RECOGNITION_RESULT = "com.nus.cs4222.isbtracker.ActivityRecognitionHelper.result";
+
+    private Context mContext;
 	
     // Constants that define the activity detection interval
     public static final int MILLISECONDS_PER_SECOND = 1000;
@@ -37,9 +42,9 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     public enum REQUEST_TYPE {START, STOP}
     private REQUEST_TYPE mRequestType;
     
-    public ActivityRecognitionHelper (Activity activity){
+    public ActivityRecognitionHelper (Context context){
     	
-    	mActivity = (FragmentActivity) activity; 
+    	mContext = context;
 
     	/*
          * Instantiate a new activity recognition client. Since the
@@ -48,52 +53,29 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
          * to specify the values of those parameters.
          */
         mActivityRecognitionClient =
-                new ActivityRecognitionClient(mActivity, this, this);
+                new ActivityRecognitionClient(mContext, this, this);
         /*
          * Create the PendingIntent that Location Services uses
          * to send activity recognition updates back to this app.
          */
         Intent intent = new Intent(
-                mActivity, ActivityRecognitionIntentService.class);
+                mContext, ActivityRecognitionIntentService.class);
         /*
          * Return a PendingIntent that starts the IntentService.
          */
         mActivityRecognitionPendingIntent =
-                PendingIntent.getService(mActivity, 0, intent,
+                PendingIntent.getService(mContext, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
         
         // Set request in progress state flag to false
         mInProgress = false;
     }
 
-    private final static int
-    CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-
-    // Define a DialogFragment that displays the error dialog
-    public static class ErrorDialogFragment extends DialogFragment {
-    	// Global field to contain the error dialog
-    	private Dialog mDialog;
-    	// Default constructor. Sets the dialog field to null
-    	public ErrorDialogFragment() {
-    		super();
-    		mDialog = null;
-    	}
-    	// Set the dialog to display
-    	public void setDialog(Dialog dialog) {
-    		mDialog = dialog;
-    	}
-    	// Return a Dialog to the DialogFragment.
-    	@Override
-    	public Dialog onCreateDialog(Bundle savedInstanceState) {
-    		return mDialog;
-    	}
-    }
-
     private boolean servicesConnected() {
     	// Check that Google Play services is available
     	int resultCode =
     			GooglePlayServicesUtil.
-    			isGooglePlayServicesAvailable(mActivity);
+    			isGooglePlayServicesAvailable(mContext);
     	// If Google Play services is available
     	if (ConnectionResult.SUCCESS == resultCode) {
     		// In debug mode, log the status
@@ -103,24 +85,11 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     		return true;
     		// Google Play services was not available for some reason
     	} else {
-    		// Get the error dialog from Google Play services
-    		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
-    				resultCode,
-    				mActivity,
-    				CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            /*Intent intent = new Intent(ScannerService.GET_PLAY_SERVICES);
+            intent.setAction("getPlayServices");
+            intent.putExtra("resultCode", resultCode);
+            LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);*/
 
-    		// If Google Play services can provide an error dialog
-    		if (errorDialog != null) {
-    			// Create a new DialogFragment for the error dialog
-    			ErrorDialogFragment errorFragment =
-    					new ErrorDialogFragment();
-    			// Set the dialog in the DialogFragment
-    			errorFragment.setDialog(errorDialog);
-    			// Show the error dialog in the DialogFragment
-    			errorFragment.show(
-    					mActivity.getSupportFragmentManager(),
-    					"Activity Recognition");
-    		}
     		return false;
     	}
     }
@@ -133,10 +102,10 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
          * If the error has a resolution, start a Google Play services
          * activity to resolve it.
          */
-        if (connectionResult.hasResolution()) {
+        /*if (connectionResult.hasResolution()) {
             try {
                 connectionResult.startResolutionForResult(
-                        mActivity,
+                        mContext,
                         CONNECTION_FAILURE_RESOLUTION_REQUEST);
             } catch (SendIntentException e) {
                 // Log the error
@@ -149,7 +118,7 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
             // Get the error dialog from Google Play services
             Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
                     errorCode,
-                    mActivity,
+                    mContext,
                     CONNECTION_FAILURE_RESOLUTION_REQUEST);
             // If Google Play services can provide an error dialog
             if (errorDialog != null) {
@@ -160,10 +129,10 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
                 errorFragment.setDialog(errorDialog);
                 // Show the error dialog in the DialogFragment
                 errorFragment.show(
-                        mActivity.getSupportFragmentManager(),
+                        mContext.getSupportFragmentManager(),
                         "Activity Recognition");
             }
-        }
+        }*/
     }
 
 	@Override

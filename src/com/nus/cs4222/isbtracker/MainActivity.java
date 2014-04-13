@@ -32,6 +32,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import android.widget.Toast;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.nus.cs4222.isbtracker.R;
 
 import android.support.v4.app.FragmentActivity;
@@ -48,12 +51,13 @@ import android.support.v4.app.FragmentActivity;
 public class MainActivity extends FragmentActivity {
     private static final String LOGTAG = MainActivity.class.getSimpleName();
 
+    private static final int REQUEST_GOOGLE_PLAY_SERVICES = 1337;
+
     private ServiceConnection mConnection;
     private ScannerService mService;
     private boolean mIsBound;
 
 	private LocationHelper locationGetter;
-	private StateMachine stateMachine;
 	
 	private TextView currentStateTextView;
 	private TextView logTextView;
@@ -86,6 +90,39 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        checkForPlayServices();
+    }
+
+    /*
+     * Check that Google Play services is available
+     */
+    private void checkForPlayServices() {
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        // If Google Play services is not available
+        if (status != ConnectionResult.SUCCESS) {
+            if (GooglePlayServicesUtil.isUserRecoverableError(status)) {
+                GooglePlayServicesUtil.getErrorDialog(status, this,
+                        REQUEST_GOOGLE_PLAY_SERVICES).show();
+            } else {
+                Toast.makeText(this, "This device is not supported.", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_GOOGLE_PLAY_SERVICES:
+                if (resultCode == RESULT_CANCELED) {
+                    Toast.makeText(this, "Google Play Services must be installed.",
+                            Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     /*
@@ -148,6 +185,7 @@ public class MainActivity extends FragmentActivity {
 
            @Override
            public void onServiceDisconnected(ComponentName name) {
+               mService = null;
                mIsBound = false;
                Log.d(LOGTAG, "Service disconnected");
            }
@@ -164,6 +202,7 @@ public class MainActivity extends FragmentActivity {
         super.onStop();
 
         unbindService(mConnection);
+        mConnection = null;
     }
 
     public void stopService(View v) {
@@ -172,17 +211,19 @@ public class MainActivity extends FragmentActivity {
         Log.d(LOGTAG, "Stop service");
     }
 
-    public void startTracking(View v){
-    	Log.v(LOGTAG, "Start Tracking");
-    	stateMachine = StateMachine.getInstance(this);
-    	stateMachine.setListener(new StateMachineListener(){
+    public void startTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+        mService.startTracking(new StateMachineListener(){
 
 			@Override
-			public void onStateMachineChanged() {
+			public void onStateMachineChanged(final StateMachine.State state) {
 				new Handler(Looper.getMainLooper()).post(new Runnable() {
 					@Override
 					public void run() {
-						switch(stateMachine.getCurrentState()){
+						switch(state){
 						case Elsewhere:
 							currentStateTextView.setText("Elsewhere");
 							break;
@@ -219,17 +260,21 @@ public class MainActivity extends FragmentActivity {
 					}
 				});
 			}
-    		
-    	});    	
-    	
-    	stateMachine.startTracking();
+
+    	});
+
     	locationGetter = new LocationHelper(this);
-    	
+
+        Log.v(LOGTAG, "Start Tracking");
     }
     
-    public void stopTracking(View v){
-    	Log.v(LOGTAG, "Stop Tracking");
-    	stateMachine.stopTracking();
+    public void stopTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+    	mService.stopTracking();
+        Log.v(LOGTAG, "Stop Tracking");
     }
     
     public void getLastLocation(View v) {    	
@@ -243,4 +288,66 @@ public class MainActivity extends FragmentActivity {
     public void getContinuousLocation(View v) {    	
     	locationGetter.getContinuousLocation();
     }
+
+    /*
+    private class ServiceBroadcastReceiver extends BroadcastReceiver {
+        private boolean mReceiverIsRegistered;
+
+        public void register() {
+            if (!mReceiverIsRegistered) {
+                registerReceiver(this, new IntentFilter(ScannerService.MESSAGE_TOPIC));
+                mReceiverIsRegistered = true;
+            }
+        }
+
+        public void unregister() {
+            if (mReceiverIsRegistered) {
+                unregisterReceiver(this);
+                mReceiverIsRegistered = false;
+            }
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (action.equals(ScannerService.MESSAGE_TOPIC)) {
+
+                String subject = intent.getStringExtra(Intent.EXTRA_SUBJECT);
+                if (subject.equals("Scanner")) {
+                    if (intent.hasExtra("fixes")) {
+                        mGpsFixes = intent.getIntExtra("fixes", 0);
+                        mGpsSats = intent.getIntExtra("sats",0);
+                    }
+                    else if (intent.hasExtra("enable")) {
+                        int enable = intent.getIntExtra("enable", -1);
+
+                        if (mConnectionRemote != null) {
+                            try {
+                                if (enable == 1) {
+                                    Log.d(LOGTAG, "Enabling scanning");
+                                    mConnectionRemote.startScanning();
+                                } else if (enable == 0) {
+                                    Log.d(LOGTAG, "Disabling scanning");
+                                    mConnectionRemote.stopScanning();
+                                }
+                            } catch (RemoteException e) {
+                                Log.e(LOGTAG, "", e);
+                            }
+                        }
+                    }
+
+                    updateUI();
+                    Log.d(LOGTAG, "Received a scanner intent...");
+                    return;
+                }
+                if (subject.equals("WifiScanner")||subject.equals("GPSScanner")||subject.equals("CellScanner")) {
+                    // We know and expect those to appear - they can be safely ignored.
+                    return;
+                }
+                Log.e(LOGTAG, "", new IllegalArgumentException("Unknown scanner message: " + subject));
+                return;
+            }
+        }
+    }*/
 }
