@@ -1,25 +1,23 @@
 package com.nus.cs4222.isbtracker;
 
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient.ConnectionCallbacks;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.location.ActivityRecognitionClient;
-import android.app.Activity;
-import android.app.Dialog;
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentSender.SendIntentException;
-import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
-import android.support.v4.app.FragmentActivity;
-import android.util.Log;
-import android.widget.Toast;
 
 public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnectionFailedListener {
-	
-	private Context mContext;
+
+    public static final String ACTIVITY_RECOGNITION_EXTRA_SUBJECT = "ActivityRecognition";
+    public static final String ACTIVITY_RECOGNITION_RESULT = "com.nus.cs4222.isbtracker.ActivityRecognitionHelper.result";
+
+    private Context mContext;
 	
     // Constants that define the activity detection interval
     public static final int MILLISECONDS_PER_SECOND = 1000;
@@ -39,9 +37,9 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     public enum REQUEST_TYPE {START, STOP}
     private REQUEST_TYPE mRequestType;
     
-    public ActivityRecognitionHelper (){
+    public ActivityRecognitionHelper (Context context){
     	
-    	mContext = ApplicationContext.get();
+    	mContext = context;
 
     	/*
          * Instantiate a new activity recognition client. Since the
@@ -68,29 +66,6 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
         mInProgress = false;
     }
 
-    private final static int
-    CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
-
-    // Define a DialogFragment that displays the error dialog
-    public static class ErrorDialogFragment extends DialogFragment {
-    	// Global field to contain the error dialog
-    	private Dialog mDialog;
-    	// Default constructor. Sets the dialog field to null
-    	public ErrorDialogFragment() {
-    		super();
-    		mDialog = null;
-    	}
-    	// Set the dialog to display
-    	public void setDialog(Dialog dialog) {
-    		mDialog = dialog;
-    	}
-    	// Return a Dialog to the DialogFragment.
-    	@Override
-    	public Dialog onCreateDialog(Bundle savedInstanceState) {
-    		return mDialog;
-    	}
-    }
-
     private boolean servicesConnected() {
     	// Check that Google Play services is available
     	int resultCode =
@@ -105,27 +80,9 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     		return true;
     		// Google Play services was not available for some reason
     	} else {
-    		/*
-    		// Get the error dialog from Google Play services
-    		Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
-    				resultCode,
-    				mContext,
-    				CONNECTION_FAILURE_RESOLUTION_REQUEST);
+            Toast.makeText(mContext.getApplicationContext(),
+                    "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
 
-    		// If Google Play services can provide an error dialog
-    		if (errorDialog != null) {
-    			// Create a new DialogFragment for the error dialog
-    			ErrorDialogFragment errorFragment =
-    					new ErrorDialogFragment();
-    			// Set the dialog in the DialogFragment
-    			errorFragment.setDialog(errorDialog);
-    			// Show the error dialog in the DialogFragment
-    			errorFragment.show(
-    					mContext.getSupportFragmentManager(),
-    					"Activity Recognition");
-    		}
-    		*/
-    		Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
     		return false;
     	}
     }
@@ -134,46 +91,8 @@ public class ActivityRecognitionHelper implements ConnectionCallbacks, OnConnect
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // Turn off the request flag
         mInProgress = false;
-        /*
-         * If the error has a resolution, start a Google Play services
-         * activity to resolve it.
-         */
-        
-        if (connectionResult.hasResolution()) {
-        	/*
-            try {
-                connectionResult.startResolutionForResult(
-                        mContext,
-                        CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            } catch (SendIntentException e) {
-                // Log the error
-                e.printStackTrace();
-            }*/
-        	Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services (resolution may be available?)", Toast.LENGTH_SHORT).show();
-        // If no resolution is available, display an error dialog
-        } else {
-        	/*
-            // Get the error code
-            int errorCode = connectionResult.getErrorCode();
-            // Get the error dialog from Google Play services
-            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
-                    errorCode,
-                    mContext,
-                    CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            // If Google Play services can provide an error dialog
-            if (errorDialog != null) {
-                // Create a new DialogFragment for the error dialog
-                ErrorDialogFragment errorFragment =
-                        new ErrorDialogFragment();
-                // Set the dialog in the DialogFragment
-                errorFragment.setDialog(errorDialog);
-                // Show the error dialog in the DialogFragment
-                errorFragment.show(
-                        mContext.getSupportFragmentManager(),
-                        "Activity Recognition");
-            }*/
-        	Toast.makeText(ApplicationContext.get(), "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
-        }
+        Toast.makeText(mContext.getApplicationContext(),
+                "Unable to connect to Google Play Services", Toast.LENGTH_SHORT).show();
     }
 
 	@Override

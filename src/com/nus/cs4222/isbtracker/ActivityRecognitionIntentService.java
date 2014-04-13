@@ -16,6 +16,7 @@
 
 package com.nus.cs4222.isbtracker;
 
+import android.support.v4.content.LocalBroadcastManager;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
@@ -28,7 +29,6 @@ import android.util.Log;
  * in the background, even if the main Activity is not visible.
  */
 public class ActivityRecognitionIntentService extends IntentService {
-
     public ActivityRecognitionIntentService() {
         // Set the label for the service's background thread
         super("ActivityRecognitionIntentService");
@@ -66,12 +66,10 @@ public class ActivityRecognitionIntentService extends IntentService {
              * Intent.
              */
             Log.v("ActivityRecognitionResult", String.format("%s %d", activityName, confidence));
-            
-            StateMachine s = StateMachine.getReadyInstance();
-            if (s != null) {
-            	s.activityDetected(result);
-            }            
-        	
+
+            // Broadcast the result back to ScannerService
+            // XXX: This class can probably be skipped entirely
+            reportNewActivity(result);
         } else {
             /*
              * This implementation ignores intents that don't contain
@@ -103,5 +101,12 @@ public class ActivityRecognitionIntentService extends IntentService {
                 return "tilting";
         }
         return "unknown";
+    }
+
+    private void reportNewActivity(ActivityRecognitionResult result) {
+        Intent intent = new Intent(ScannerService.UPDATE_TOPIC);
+        intent.putExtra(Intent.EXTRA_SUBJECT, ActivityRecognitionHelper.ACTIVITY_RECOGNITION_EXTRA_SUBJECT);
+        intent.putExtra(ActivityRecognitionHelper.ACTIVITY_RECOGNITION_RESULT, result);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 }

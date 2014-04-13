@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.content.*;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -48,23 +47,16 @@ import android.support.v4.app.FragmentActivity;
  * so that detection can continue even if the Activity is not visible.
  */
 public class MainActivity extends FragmentActivity {
-    private static final String LOGTAG = MainActivity.class.getName();
+    private static final String LOGTAG = MainActivity.class.getSimpleName();
 
     private ServiceConnection mConnection;
     private ScannerService mService;
     private boolean mIsBound;
 
 	private LocationHelper locationGetter;
-	private StateMachine stateMachine;
 	
 	private TextView currentStateTextView;
 	private TextView logTextView;
-
-    /*
-     *  Intent filter for incoming broadcasts from the
-     *  IntentService.
-     */
-    IntentFilter mBroadcastFilter;
 
     /*
      * Set main UI layout, get a handle to the ListView for logs, and create the broadcast
@@ -79,7 +71,7 @@ public class MainActivity extends FragmentActivity {
         
         currentStateTextView = (TextView) findViewById(R.id.current_state_textview);
         logTextView = (TextView) findViewById(R.id.log_textview);
-        
+
         ApplicationContext.getInstance().init(getApplicationContext());
         assert(getApplicationContext() == ApplicationContext.get());        
     }
@@ -152,13 +144,15 @@ public class MainActivity extends FragmentActivity {
 
            @Override
            public void onServiceDisconnected(ComponentName name) {
+               mService = null;
                mIsBound = false;
                Log.d(LOGTAG, "Service disconnected");
            }
         };
 
-        // Bind to service
+        // Start and bind to service
         Intent intent = new Intent(this, ScannerService.class);
+        startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -167,19 +161,28 @@ public class MainActivity extends FragmentActivity {
         super.onStop();
 
         unbindService(mConnection);
+        mConnection = null;
     }
-    
-    public void startTracking(View v){
-    	Log.v(LOGTAG, "Start Tracking");
-    	stateMachine = StateMachine.getInstance(this);
-    	stateMachine.setListener(new StateMachineListener(){
+
+    public void stopService(View v) {
+        Intent intent = new Intent(this, ScannerService.class);
+        stopService(intent);
+        Log.d(LOGTAG, "Stop service");
+    }
+
+    public void startTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+        mService.startTracking(new StateMachineListener(){
 
 			@Override
-			public void onStateMachineChanged() {
+			public void onStateMachineChanged(final StateMachine.State state) {
 				new Handler(Looper.getMainLooper()).post(new Runnable() {
 					@Override
 					public void run() {
-						switch(stateMachine.getCurrentState()){
+						switch(state){
 						case Elsewhere:
 							currentStateTextView.setText("Elsewhere");
 							break;
@@ -216,32 +219,36 @@ public class MainActivity extends FragmentActivity {
 					}
 				});
 			}
-    		
-    	});    	
-    	
-    	stateMachine.startTracking();
-    	locationGetter = new LocationHelper();
-    	
+
+    	});
+
+    	locationGetter = new LocationHelper(this);
+
+        Log.v(LOGTAG, "Start Tracking");
     }
     
-    public void stopTracking(View v){
-    	Log.v(LOGTAG, "Stop Tracking");
-    	stateMachine.stopTracking();
+    public void stopTracking(View v) {
+        if (!mIsBound) {
+            return;
+        }
+
+    	mService.stopTracking();
+        Log.v(LOGTAG, "Stop Tracking");
     }
     
     public void getLastLocation(View v) {    	
     	locationGetter.getLastLocation();
     	
-    	
+    	/*
     	Location l = new Location("");
-		l.setLatitude(  1.303520);
-		l.setLongitude(103.774413);
+		l.setLatitude(1.293477);
+		l.setLongitude(103.781353);
     	
     	BusRoutes br = new BusRoutes();    	
     	String message = "Distance: " + br.getDistanceFromRoutes(l);
     	String desiredText = logTextView.getText() + "\n" + message;
 		logTextView.setText(desiredText);
-		
+		*/
     }
     
     public void getCurrentLocation(View v) {
