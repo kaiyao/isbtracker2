@@ -33,7 +33,7 @@ public class StateMachine {
 	private static StateMachine theOne;
 	private State currentState;
 	
-	private FragmentActivity mActivity;
+	private Context mContext;
 	
 	private ActivityRecognitionResult lastActivityDetected;
 	private Location lastLocationChangeDetected;
@@ -55,7 +55,7 @@ public class StateMachine {
 	private final float DISTANCE_LIMIT = 50.0f;	
 	
 	private StateMachine(FragmentActivity context){
-		mActivity = context;
+		mContext = context;
 		
 		currentState = State.Elsewhere;
 		stateWhenPreviousCheck = State.Elsewhere;
@@ -63,7 +63,7 @@ public class StateMachine {
 		
 		busStops = new BusStops();
 		busRoutes = new BusRoutes();
-		locationHelper = new LocationHelper(mActivity);
+		locationHelper = new LocationHelper();
 	}
 	
 	public static StateMachine getInstance(FragmentActivity context){
@@ -334,7 +334,7 @@ public class StateMachine {
 	}
 	
 	public void startTracking() {
-        activityRecognition = new ActivityRecognitionHelper(mActivity);
+        activityRecognition = new ActivityRecognitionHelper();
 		activityRecognition.startUpdates(20000);
 		mListener.onLogMessage("Start Tracking");
 	}
