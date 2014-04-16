@@ -1,5 +1,6 @@
 package com.nus.cs4222.isbtracker;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -8,8 +9,10 @@ import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+
 import com.google.android.gms.location.ActivityRecognitionResult;
 
 public class ScannerService extends Service {
@@ -18,6 +21,7 @@ public class ScannerService extends Service {
     public static final String UPDATE_TOPIC = "update-event";
 
     private static final String LOGTAG = ScannerService.class.getSimpleName();
+	private static final int ONGOING_NOTIFICATION_ID = 1;
 
     private final IBinder mBinder = new ScannerBinder();
     private boolean mIsBound;
@@ -33,6 +37,21 @@ public class ScannerService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(LOGTAG, "onStartCommand");
+        
+        // Create a notification builder that's compatible with platforms >= version 4
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(getApplicationContext());
+
+        // Set the title, text, and icon
+        builder.setContentTitle(getString(R.string.app_name))
+               .setContentText("App is running")
+               .setSmallIcon(R.drawable.ic_notification)
+
+               // Get the Intent that starts the Location settings panel
+               //.setContentIntent(intent)
+               ;
+        
+        startForeground(ONGOING_NOTIFICATION_ID, builder.build());
         return Service.START_STICKY;
     }
 
