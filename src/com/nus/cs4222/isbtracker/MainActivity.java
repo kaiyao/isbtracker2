@@ -138,6 +138,10 @@ public class MainActivity extends FragmentActivity {
            public void onServiceConnected(ComponentName name, IBinder service) {
                ScannerService.ScannerBinder binder = (ScannerService.ScannerBinder) service;
                mService = binder.getService();
+               
+               // Set state machine listener (before binding to service)
+               mService.setStateMachineListener(mStateMachineListener);
+               
                mIsBound = true;
                Log.d(LOGTAG, "Service connected");
            }
@@ -175,57 +179,60 @@ public class MainActivity extends FragmentActivity {
             return;
         }
 
-        mService.startTracking(new StateMachineListener(){
-
-			@Override
-			public void onStateMachineChanged(final StateMachine.State state) {
-				new Handler(Looper.getMainLooper()).post(new Runnable() {
-					@Override
-					public void run() {
-						switch(state){
-						case Elsewhere:
-							currentStateTextView.setText("Elsewhere");
-							break;
-						case OnBus:
-							currentStateTextView.setText("On Bus");
-							break;
-						case PossiblyOnBus:
-							currentStateTextView.setText("Possibly On Bus");
-							break;
-						case PossiblyWaitingForBus:
-							currentStateTextView.setText("Possibly Waiting For Bus");
-							break;
-						case WaitingForBus:
-							currentStateTextView.setText("Waiting For Bus");
-							break;
-						default:
-							break;
-						}
-					}
-				});
-			}
-
-			@Override
-			public void onLogMessage(final String message) {
-				new Handler(Looper.getMainLooper()).post(new Runnable() {
-					@Override
-					public void run() {
-						String timeString = new SimpleDateFormat("y-M-d H:m:s", Locale.US).format(new Date());
-						String desiredText = logTextView.getText() + "\n" + timeString + " " + message;
-						if (desiredText.length() > 5000) {
-							desiredText = desiredText.substring(desiredText.length() - 5000);
-						}
-						logTextView.setText(desiredText);
-					}
-				});
-			}
-
-    	});
+        mService.setStateMachineListener(mStateMachineListener);
+        mService.startTracking();
 
     	locationGetter = new LocationHelper(this);
 
         Log.v(LOGTAG, "Start Tracking");
     }
+    
+    public StateMachineListener mStateMachineListener = new StateMachineListener(){
+
+		@Override
+		public void onStateMachineChanged(final StateMachine.State state) {
+			new Handler(Looper.getMainLooper()).post(new Runnable() {
+				@Override
+				public void run() {
+					switch(state){
+					case Elsewhere:
+						currentStateTextView.setText("Elsewhere");
+						break;
+					case OnBus:
+						currentStateTextView.setText("On Bus");
+						break;
+					case PossiblyOnBus:
+						currentStateTextView.setText("Possibly On Bus");
+						break;
+					case PossiblyWaitingForBus:
+						currentStateTextView.setText("Possibly Waiting For Bus");
+						break;
+					case WaitingForBus:
+						currentStateTextView.setText("Waiting For Bus");
+						break;
+					default:
+						break;
+					}
+				}
+			});
+		}
+
+		@Override
+		public void onLogMessage(final String message) {
+			new Handler(Looper.getMainLooper()).post(new Runnable() {
+				@Override
+				public void run() {
+					String timeString = new SimpleDateFormat("y-M-d H:m:s", Locale.US).format(new Date());
+					String desiredText = logTextView.getText() + "\n" + timeString + " " + message;
+					if (desiredText.length() > 5000) {
+						desiredText = desiredText.substring(desiredText.length() - 5000);
+					}
+					logTextView.setText(desiredText);
+				}
+			});
+		}
+
+	};
     
     public void stopTracking(View v) {
         if (!mIsBound) {

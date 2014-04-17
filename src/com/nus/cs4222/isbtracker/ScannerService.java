@@ -1,6 +1,5 @@
 package com.nus.cs4222.isbtracker;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -26,7 +25,8 @@ public class ScannerService extends Service {
     private final IBinder mBinder = new ScannerBinder();
     private boolean mIsBound;
     private StateMachine mStateMachine;
-    private BroadcastReceiver mMessageReceiver;
+    private StateMachineListener mStateMachineListener;
+    private BroadcastReceiver mMessageReceiver;    
 
     public class ScannerBinder extends Binder {
         ScannerService getService() {
@@ -113,10 +113,10 @@ public class ScannerService extends Service {
         return true;
     }
 
-    public void startTracking(StateMachineListener listener) {
+    public void startTracking() {
         // XXX: Eventually we should just keep one StateMachine
         mStateMachine = new StateMachine(this);
-        mStateMachine.setListener(listener);
+        mStateMachine.setListener(mStateMachineListener);
         mStateMachine.startTracking();
     }
 
@@ -129,4 +129,16 @@ public class ScannerService extends Service {
             }
         }
     }
+
+	public StateMachineListener getStateMachineListener() {
+		return mStateMachineListener;
+	}
+
+	public void setStateMachineListener(StateMachineListener mStateMachineListener) {
+		this.mStateMachineListener = mStateMachineListener;
+		
+		if (mStateMachine != null) {
+			mStateMachine.setListener(mStateMachineListener);
+		}
+	}
 }
