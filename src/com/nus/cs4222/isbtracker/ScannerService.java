@@ -1,5 +1,6 @@
 package com.nus.cs4222.isbtracker;
 
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -38,6 +39,11 @@ public class ScannerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(LOGTAG, "onStartCommand");
         
+        Intent mainActivityIntent = new Intent(getApplicationContext(), MainActivity.class);
+        mainActivityIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent mainActivityPendingIntent = PendingIntent.getActivity(getApplicationContext(), 0, mainActivityIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+        
         // Create a notification builder that's compatible with platforms >= version 4
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(getApplicationContext());
@@ -48,7 +54,7 @@ public class ScannerService extends Service {
                .setSmallIcon(R.drawable.ic_notification)
 
                // Get the Intent that starts the Location settings panel
-               //.setContentIntent(intent)
+               .setContentIntent(mainActivityPendingIntent)
                ;
         
         startForeground(ONGOING_NOTIFICATION_ID, builder.build());
