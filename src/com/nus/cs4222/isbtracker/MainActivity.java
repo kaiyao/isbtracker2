@@ -16,6 +16,7 @@
 
 package com.nus.cs4222.isbtracker;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -181,11 +182,13 @@ public class MainActivity extends FragmentActivity {
         Log.v(LOGTAG, "Start Tracking");
     }
     
-    public StateMachineListener mStateMachineListener = new StateMachineListener(){
+    private StateMachineListener mStateMachineListener = new StateMachineListener(){
+	    final Handler handler = new Handler(Looper.getMainLooper());
+	    final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
 
 		@Override
 		public void onStateMachineChanged(final StateMachine.State state) {
-			new Handler(Looper.getMainLooper()).post(new Runnable() {
+			handler.post(new Runnable() {
 				@Override
 				public void run() {
 					switch(state){
@@ -213,10 +216,10 @@ public class MainActivity extends FragmentActivity {
 
 		@Override
 		public void onLogMessage(final String message) {
-			new Handler(Looper.getMainLooper()).post(new Runnable() {
+			handler.post(new Runnable() {
 				@Override
 				public void run() {
-					String timeString = new SimpleDateFormat("y-M-d H:m:s", Locale.US).format(new Date());
+					String timeString = dateFormat.format(new Date());
 					String desiredText = logTextView.getText() + "\n" + timeString + " " + message;
 					if (desiredText.length() > 5000) {
 						desiredText = desiredText.substring(desiredText.length() - 5000);
