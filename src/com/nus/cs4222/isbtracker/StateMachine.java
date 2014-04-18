@@ -32,8 +32,8 @@ public class StateMachine {
 	private ActivityRecognitionResult lastActivityDetected;
 	private Location lastLocationChangeDetected;
 	private DetectedType lastDetectedType;
-	private boolean continuousLocationEnabled = false;
-	private int lastUsedActivityDetectionInterval = 0;
+	private boolean continuousLocationEnabled;
+	private int lastUsedActivityDetectionInterval;
 	
 	private BusStops busStops;
 	private BusRoutes busRoutes;
@@ -53,17 +53,12 @@ public class StateMachine {
 	public StateMachine(Context context){
 		mContext = context;
 
-		currentState = State.Elsewhere;
-		stateWhenPreviousCheck = State.Elsewhere;
-		timeEnteredCurrentState = getCurrentTime();
-
 		busStops = new BusStops();
 		busRoutes = new BusRoutes();
-		locationHelper = new LocationHelper(mContext);
 
 		mIsTracking = false;
 	}
-	
+
 	public void activityDetected(ActivityRecognitionResult result){
 		lastActivityDetected = result;
 		lastDetectedType = DetectedType.Activity;
@@ -321,27 +316,37 @@ public class StateMachine {
 	}
 	
 	public void startTracking() {
-		activityRecognition = new ActivityRecognitionHelper(mContext);
-		activityRecognition.startUpdates(20000);
-
-		currentState = State.Elsewhere;
-		timeEnteredCurrentState = getCurrentTime();
-		stateWhenPreviousCheck = State.Elsewhere;
-		mListener.onStateMachineChanged(currentState);
-
-		mIsTracking = true;
 		mListener.onLogMessage("Start Tracking");
+		mIsTracking = true;
+
+		if (activityRecognition == null) {
+			activityRecognition = new ActivityRecognitionHelper(mContext);
+		}
+		activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_LONG);
+		if (locationHelper == null) {
+			locationHelper = new LocationHelper(mContext);
+		}
+
+		// Reset state machine to initial state
+		currentState = State.Elsewhere;
+		stateWhenPreviousCheck = State.Elsewhere;
+		timeEnteredCurrentState = getCurrentTime();
+		lastUsedActivityDetectionInterval = 0;
+		continuousLocationEnabled = false;
+
+		mListener.onStateMachineChanged(currentState);
 	}
-	
+
 	public void stopTracking() {
 		mListener.onLogMessage("Stop Tracking");
+		mIsTracking = false;
+
 		if (activityRecognition != null) {
 			activityRecognition.stopUpdates();
 		}
 		if (locationHelper != null) {
 			locationHelper.stopContinousLocation();
 		}
-		mIsTracking = false;
 	}
 	
 	public boolean isTracking() {

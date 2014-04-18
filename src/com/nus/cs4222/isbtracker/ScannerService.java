@@ -66,6 +66,10 @@ public class ScannerService extends Service {
         super.onCreate();
         Log.d(LOGTAG, "onCreate");
 
+	    // Create state machine
+	    mStateMachine = new StateMachine(this);
+
+	    // Create and register receiver to receive activity and location updates from Play Services
         mMessageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -92,6 +96,11 @@ public class ScannerService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(LOGTAG, "onDestroy");
+
+	    if (mStateMachine.isTracking()) {
+		    mStateMachine.stopTracking();
+	    }
+
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReceiver);
     }
 
@@ -112,7 +121,7 @@ public class ScannerService extends Service {
     public boolean onUnbind(Intent intent) {
         mIsBound = false;
         Log.d(LOGTAG, "onUnbind");
-        if (mStateMachine != null && !mStateMachine.isTracking()) {
+        if (!mStateMachine.isTracking()) {
             stopSelf();
         }
         // Allow rebinding by returning true
@@ -120,16 +129,13 @@ public class ScannerService extends Service {
     }
 
     public void startTracking() {
-        // XXX: Eventually we should just keep one StateMachine
-        mStateMachine = new StateMachine(this);
         mStateMachine.setListener(mStateMachineListener);
         mStateMachine.startTracking();
     }
 
     public void stopTracking() {
-        if (mStateMachine != null && mStateMachine.isTracking()) {
+        if (mStateMachine.isTracking()) {
             mStateMachine.stopTracking();
-            mStateMachine = null;
             if (!mIsBound) {
                 stopSelf();
             }
