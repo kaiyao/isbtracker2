@@ -168,12 +168,6 @@ public class MainActivity extends FragmentActivity {
         mConnection = null;
     }
 
-    public void stopService(View v) {
-        Intent intent = new Intent(this, ScannerService.class);
-        stopService(intent);
-        Log.d(LOGTAG, "Stop service");
-    }
-
     public void startTracking(View v) {
         if (!mIsBound) {
             return;
