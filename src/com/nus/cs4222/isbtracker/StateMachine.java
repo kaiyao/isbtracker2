@@ -18,6 +18,8 @@ public class StateMachine {
 	public static final int VEHICLE_MIN_SPEED_KPH = 20;
 	public static final int VEHICLE_MIN_SPEED_MPS = VEHICLE_MIN_SPEED_KPH * 1000 / 3600;
 	
+	public static boolean SPEED_SIMULATION_MODE = true;
+	
 	public enum State {
 	    Elsewhere, PossiblyWaitingForBus, WaitingForBus, PossiblyOnBus, OnBus
 	}
@@ -68,8 +70,32 @@ public class StateMachine {
 	}
 	
 	public void locationChanged(Location location){
+		
+		mListener.onLogMessage("Location: " + location.getLatitude() + ","+location.getLongitude() + " "+location.getSpeed());
+		
+		if (SPEED_SIMULATION_MODE && location.getSpeed() == 0 && lastLocationChangeDetected != null) {
+			
+			float deltaDistance = location.distanceTo(lastLocationChangeDetected);
+			long deltaTime = location.getTime() - lastLocationChangeDetected.getTime();
+			
+			// Speed is in meters per second
+			if (deltaTime > 0) {
+				float speed = deltaDistance / (deltaTime / 1000);
+				
+				// Prevent ridiculous "infinite" speed
+				if (speed < 15) {
+					location.setSpeed(speed);
+				
+					mListener.onLogMessage("Location simulated speed: " + speed);
+				}
+			}
+			
+			
+		}
+		
 		lastLocationChangeDetected = location;
 		lastDetectedType = DetectedType.Location;
+		
 		checkStateChange();
 	}
 	
@@ -334,6 +360,8 @@ public class StateMachine {
 			}
 		}
 		
+		
+		/*
 		// Check if state has been changed above
 		if (stateChangeList != null && !stateChangeList.isEmpty()) {
 			previousState = stateChangeList.getFirst().getState();
@@ -342,6 +370,7 @@ public class StateMachine {
 			// If state has been changed, we process the current state
 			checkStateChange();
 		}
+		*/
 		
 	}
 
