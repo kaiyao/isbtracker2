@@ -44,6 +44,7 @@ public class StateMachine {
 	private BusRoutes busRoutes;
 	
 	private LinkedList<StateChange> stateChangeList;
+	private LinkedList<TripSegmentMini> tripSegmentsList;
 	
 	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationHelper;
@@ -204,7 +205,30 @@ public class StateMachine {
 				
 				// if position is near bus stop, change state
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= DISTANCE_LIMIT) {
-					currentState = State.PossiblyWaitingForBus;					
+					currentState = State.PossiblyWaitingForBus;		
+				}
+				
+				// end of bus trip
+				if (tripSegmentsList != null && !tripSegmentsList.isEmpty()) {
+					
+					// No need to log the last bus stop as it would have been recorded
+					// in the on bus state
+					/*
+					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
+					BusStop nearestExpectedStop = null;
+					float nearestExpectedStopDistance = Float.POSITIVE_INFINITY;
+					for (BusStop bs : lastStop.getNextStops()){
+						if (bs.getDistanceFromLocation(currentPosition) < nearestExpectedStopDistance) {
+							nearestExpectedStopDistance = bs.getDistanceFromLocation(currentPosition);
+							nearestExpectedStop = bs;
+						}
+					}
+					tripSegmentsList.addFirst(new TripSegmentMini(nearestExpectedStop, getCurrentTime()));
+					*/
+					
+					// At this point record the trip segments list
+					// And reset it in preparation for the next trip
+					Log.v("isbtracker.StateMachine", "End of trip");
 				}
 			}
 			
@@ -240,6 +264,9 @@ public class StateMachine {
 				
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 				
+				// Initialize trip segments
+				tripSegmentsList = new LinkedList<TripSegmentMini>();
+				
 				// position is near bus stop and time more than one minute
 				Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= 20 && 
@@ -270,6 +297,9 @@ public class StateMachine {
 				
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 			
+				// Initialize trip segments
+				tripSegmentsList = new LinkedList<TripSegmentMini>();
+				
 				// vehicle speed is fast or movement detected
 				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
 					mListener.onLogMessage("vehicle motion or speed detected");
@@ -286,6 +316,25 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is possibly on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+			
+			if (lastLocationChangeDetected != null && tripSegmentsList != null) {
+				Location currentPosition = lastLocationChangeDetected;
+				
+				if (tripSegmentsList.isEmpty()){
+					BusStop nearestStop = busStops.getNearestStop(currentPosition);
+					tripSegmentsList.addFirst(new TripSegmentMini(nearestStop, getCurrentTime()));
+				}else{
+					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
+					
+					for (BusStop bs : lastStop.getNextStops()){
+						if (bs.getDistanceFromLocation(currentPosition) < 30) {
+							tripSegmentsList.addFirst(new TripSegmentMini(bs, getCurrentTime()));
+							break;
+						}
+					}
+				}
+				
+			}
 			
 			// accelerometer indicates vehicle movement
 			Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
@@ -309,6 +358,25 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+			
+			if (lastLocationChangeDetected != null && tripSegmentsList != null) {
+				Location currentPosition = lastLocationChangeDetected;
+				
+				if (tripSegmentsList.isEmpty()){
+					BusStop nearestStop = busStops.getNearestStop(currentPosition);
+					tripSegmentsList.addFirst(new TripSegmentMini(nearestStop, getCurrentTime()));
+				}else{
+					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
+					
+					for (BusStop bs : lastStop.getNextStops()){
+						if (bs.getDistanceFromLocation(currentPosition) < 30) {
+							tripSegmentsList.addFirst(new TripSegmentMini(bs, getCurrentTime()));
+							break;
+						}
+					}
+				}
+				
+			}
 			
 			//accelerometer indicates walking movement
 			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
