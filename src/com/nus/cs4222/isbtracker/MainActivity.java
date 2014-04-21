@@ -264,7 +264,11 @@ public class MainActivity extends FragmentActivity {
     	locationGetter.getCurrentLocation();
     }
     
-    public void getContinuousLocation(View v) {    	
-    	locationGetter.getContinuousLocation();
+    public void getContinuousLocation(View v) {
+    	if (locationGetter.mUpdatesRequested) {
+	    	locationGetter.stopContinousLocation();
+    	}else{
+    		locationGetter.getContinuousLocation();
+    	}
     }
 }

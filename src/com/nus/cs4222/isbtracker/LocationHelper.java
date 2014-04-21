@@ -215,7 +215,8 @@ GooglePlayServicesClient.OnConnectionFailedListener, android.location.LocationLi
         	
             Log.d("CurrentLocation", "Sending request");
         	mUpdatesRequested = true;
-        	//mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        	
+        	mLocationClient.requestLocationUpdates(mLocationRequest, this);
         	
         	LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         	locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, LocationUtils.UPDATE_INTERVAL_IN_MILLISECONDS, 0.01f, this);
@@ -225,7 +226,8 @@ GooglePlayServicesClient.OnConnectionFailedListener, android.location.LocationLi
     
     public void stopContinousLocation(){
     	mUpdatesRequested = false;
-    	//mLocationClient.removeLocationUpdates(this);
+    	
+    	mLocationClient.removeLocationUpdates(this);
     	LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
     	locationManager.removeUpdates(this);
     }
