@@ -123,6 +123,11 @@ public class MainActivity extends FragmentActivity {
 
                 // Continue by passing true to the menu handler
                 return true;
+                
+            case R.id.menu_item_query:
+            	Intent intent = new Intent(this, QueryActivity.class);
+            	startActivity(intent);
+            	return true;
 
             // For any other choice, pass it to the super()
             default:
