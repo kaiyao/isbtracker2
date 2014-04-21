@@ -181,15 +181,7 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is elsewhere");
 			
-			if (continuousLocationEnabled) {
-				locationHelper.stopContinousLocation();
-				continuousLocationEnabled = false;
-			}
-			
-			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_LONG){
-				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_LONG;
-				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_LONG);				
-			}
+			disableContinousLocationAndSetLongActivityDetectionInterval();
 			
 			// Check current position
 			if (lastDetectedType == DetectedType.Activity) {
@@ -220,19 +212,7 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is possibly waiting for bus");
 
-			// Check current position
-			// Set GPS to continuous poll
-			mListener.onLogMessage("Checking if continous poll mode");
-			if (!continuousLocationEnabled) {
-				mListener.onLogMessage("Continous location not enabled, enabling...");
-				locationHelper.getContinuousLocation();
-				continuousLocationEnabled = true;
-			}
-			
-			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
-				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
-				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
-			}
+			enableContinousGpsAndSetShortActivityDetectionInterval();
 			
 			// Check time spent waiting for bus at bus stop
 			for (StateChange stateChange : stateChangeList) {
@@ -282,16 +262,7 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is waiting for bus");
 			
-			if (!continuousLocationEnabled) {
-				mListener.onLogMessage("Continous location not enabled, enabling...");
-				locationHelper.getContinuousLocation();
-				continuousLocationEnabled = true;
-			}
-			
-			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
-				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
-				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
-			}
+			enableContinousGpsAndSetShortActivityDetectionInterval();
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -314,16 +285,7 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is possibly on bus");
 			
-			if (!continuousLocationEnabled) {
-				mListener.onLogMessage("Continous location not enabled, enabling...");
-				locationHelper.getContinuousLocation();
-				continuousLocationEnabled = true;
-			}
-			
-			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
-				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
-				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
-			}
+			enableContinousGpsAndSetShortActivityDetectionInterval();
 			
 			// accelerometer indicates vehicle movement
 			Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
@@ -346,16 +308,7 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is on bus");
 			
-			if (!continuousLocationEnabled) {
-				mListener.onLogMessage("Continous location not enabled, enabling...");
-				locationHelper.getContinuousLocation();
-				continuousLocationEnabled = true;
-			}
-			
-			if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
-				lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
-				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
-			}
+			enableContinousGpsAndSetShortActivityDetectionInterval();
 			
 			//accelerometer indicates walking movement
 			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
@@ -379,6 +332,34 @@ public class StateMachine {
 		}
 		*/
 		
+	}
+
+	private void disableContinousLocationAndSetLongActivityDetectionInterval() {
+		if (continuousLocationEnabled) {
+			locationHelper.stopContinousLocation();
+			continuousLocationEnabled = false;
+		}
+		
+		if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_LONG){
+			lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_LONG;
+			activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_LONG);				
+		}
+	}
+
+	private void enableContinousGpsAndSetShortActivityDetectionInterval() {
+		// Check current position
+		// Set GPS to continuous poll
+		mListener.onLogMessage("Checking if continous poll mode");
+		if (!continuousLocationEnabled) {
+			mListener.onLogMessage("Continous location not enabled, enabling...");
+			locationHelper.getContinuousLocation();
+			continuousLocationEnabled = true;
+		}
+		
+		if (lastUsedActivityDetectionInterval != ACTIVTY_DETECTION_INTERVAL_SHORT){
+			lastUsedActivityDetectionInterval = ACTIVTY_DETECTION_INTERVAL_SHORT;
+			activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
+		}
 	}
 
 	public State getCurrentState() {
