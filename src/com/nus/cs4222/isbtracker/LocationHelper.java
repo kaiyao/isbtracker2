@@ -3,6 +3,7 @@ package com.nus.cs4222.isbtracker;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -19,7 +20,7 @@ import com.google.android.gms.location.LocationRequest;
 public class LocationHelper implements
 LocationListener,
 GooglePlayServicesClient.ConnectionCallbacks,
-GooglePlayServicesClient.OnConnectionFailedListener {
+GooglePlayServicesClient.OnConnectionFailedListener, android.location.LocationListener {
 
     public static final String LOCATION_HELPER_EXTRA_SUBJECT = "LocationHelper";
     public static final String LOCATION_HELPER_LOCATION = "com.nus.cs4222.isbtracker.LocationHelper.location";
@@ -214,14 +215,19 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         	
             Log.d("CurrentLocation", "Sending request");
         	mUpdatesRequested = true;
-        	mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        	//mLocationClient.requestLocationUpdates(mLocationRequest, this);
+        	
+        	LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+        	locationManager.requestLocationUpdates (LocationManager.GPS_PROVIDER, LocationUtils.UPDATE_INTERVAL_IN_MILLISECONDS, 0.01f, this);
         	
         }
     }
     
     public void stopContinousLocation(){
     	mUpdatesRequested = false;
-    	mLocationClient.removeLocationUpdates(this);
+    	//mLocationClient.removeLocationUpdates(this);
+    	LocationManager locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+    	locationManager.removeUpdates(this);
     }
 
     private void reportNewLocation(Location location) {
@@ -230,4 +236,22 @@ GooglePlayServicesClient.OnConnectionFailedListener {
         intent.putExtra(LOCATION_HELPER_LOCATION, location);
         LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
     }
+
+	@Override
+	public void onProviderDisabled(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onProviderEnabled(String arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+		// TODO Auto-generated method stub
+		
+	}
 }

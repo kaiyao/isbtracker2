@@ -3,6 +3,8 @@ package com.nus.cs4222.isbtracker;
 import android.content.Context;
 import android.location.Location;
 import android.text.format.Time;
+import android.util.Log;
+
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.nus.cs4222.isbtracker.route.BusRoutes;
@@ -247,6 +249,7 @@ public class StateMachine {
 				
 				if (waitingTime > 0) {
 					// Process waiting time here
+					Log.d("isbtracker.StateMachine", "Waiting Time" + waitingTime);
 				}
 			}
 			
