@@ -7,6 +7,7 @@ import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 import com.nus.cs4222.isbtracker.route.BusRoutes;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class StateMachine {
@@ -38,8 +39,7 @@ public class StateMachine {
 	private BusStops busStops;
 	private BusRoutes busRoutes;
 	
-	private State stateWhenPreviousCheck;
-	private Time timeEnteredCurrentState;
+	private LinkedList<StateChange> stateChangeList;
 	
 	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationHelper;
@@ -57,6 +57,8 @@ public class StateMachine {
 		busRoutes = new BusRoutes();
 
 		mIsTracking = false;
+		
+		stateChangeList = new LinkedList<StateChange>();
 	}
 
 	public void activityDetected(ActivityRecognitionResult result){
@@ -90,13 +92,15 @@ public class StateMachine {
     }
 	
 	private int confidenceForActivity(ActivityRecognitionResult lastActivityDetected, int type) {
-		List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
-		for (DetectedActivity activity : activities){
-			mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
-			
-			if (activity.getType() == type) {
-				return activity.getConfidence();
+		if (lastActivityDetected != null) {
+			List<DetectedActivity> activities = lastActivityDetected.getProbableActivities();
+			for (DetectedActivity activity : activities){
+				mListener.onLogMessage("Activity is "+getActivityNameFromType(activity.getType()) + " " + activity.getConfidence());
 				
+				if (activity.getType() == type) {
+					return activity.getConfidence();
+					
+				}
 			}
 		}
 		return 0;
@@ -128,9 +132,21 @@ public class StateMachine {
 	
 	public void checkStateChange(){
 				
-		if (stateWhenPreviousCheck != currentState) {
-			timeEnteredCurrentState = getCurrentTime();
+		State previousState = null;
+		if (stateChangeList != null && !stateChangeList.isEmpty()) {
+			previousState = stateChangeList.getFirst().getState();
+		}
+		if (previousState != currentState) {
 			mListener.onStateMachineChanged(currentState);
+			
+			// We add new state change to the head of the list
+			StateChange stateChange = new StateChange(currentState, getCurrentTime());
+			stateChangeList.addFirst(stateChange);
+			
+			// If list is too long we remove from the tail
+			while (stateChangeList.size() > 100) {
+				stateChangeList.removeLast();
+			}
 		}
 		
 		if (currentState == State.Elsewhere) {	
@@ -186,6 +202,25 @@ public class StateMachine {
 				activityRecognition.startUpdates(ACTIVTY_DETECTION_INTERVAL_SHORT);				
 			}
 			
+			// Check time spent waiting for bus at bus stop
+			for (StateChange stateChange : stateChangeList) {
+				if (stateChange.getState() == State.Elsewhere) {
+					break;
+				}
+				
+				long waitingTime = 0;
+				if (stateChange.getState() == State.PossiblyWaitingForBus){
+					waitingTime = 30000;
+				}else if (stateChange.getState() == State.WaitingForBus){
+					waitingTime = getCurrentTime().toMillis(false) - stateChange.getTimeEnteredState().toMillis(false) + 30000;
+				}
+				
+				if (waitingTime > 0) {
+					// Process waiting time here
+				}
+			}
+			
+			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
@@ -193,6 +228,7 @@ public class StateMachine {
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 				
 				// position is near bus stop and time more than one minute
+				Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
 				if (nearestStop.getDistanceFromLocation(currentPosition) <= 20 && 
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					mListener.onLogMessage("position is near bus stop and time more than one minute");
@@ -257,6 +293,7 @@ public class StateMachine {
 			}
 			
 			// accelerometer indicates vehicle movement
+			Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
 			if ((confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || 
 					lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS) &&
 					Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000)  {
@@ -297,10 +334,15 @@ public class StateMachine {
 			}
 		}
 		
-		if (stateWhenPreviousCheck != currentState) {
-			stateWhenPreviousCheck = currentState;
+		// Check if state has been changed above
+		if (stateChangeList != null && !stateChangeList.isEmpty()) {
+			previousState = stateChangeList.getFirst().getState();
+		}
+		if (previousState != currentState) {
+			// If state has been changed, we process the current state
 			checkStateChange();
 		}
+		
 	}
 
 	public State getCurrentState() {
@@ -329,8 +371,6 @@ public class StateMachine {
 
 		// Reset state machine to initial state
 		currentState = State.Elsewhere;
-		stateWhenPreviousCheck = State.Elsewhere;
-		timeEnteredCurrentState = getCurrentTime();
 		lastUsedActivityDetectionInterval = 0;
 		continuousLocationEnabled = false;
 
