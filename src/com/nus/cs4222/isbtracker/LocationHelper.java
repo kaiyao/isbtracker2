@@ -172,7 +172,12 @@ GooglePlayServicesClient.OnConnectionFailedListener {
             mLocationRequest.setInterval(LocationUtils.UPDATE_INTERVAL_IN_MILLISECONDS);
 
             // Use high accuracy
-            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            if (Common.SIMULATION_MODE){
+            	// Force use GPS in simulation mode
+            	mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            }else{
+            	mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            }
 
             // Set the interval ceiling to one minute
             mLocationRequest.setFastestInterval(LocationUtils.FAST_INTERVAL_CEILING_IN_MILLISECONDS);

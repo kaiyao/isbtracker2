@@ -18,7 +18,7 @@ public class StateMachine {
 	public static final int VEHICLE_MIN_SPEED_KPH = 20;
 	public static final int VEHICLE_MIN_SPEED_MPS = VEHICLE_MIN_SPEED_KPH * 1000 / 3600;
 	
-	public static boolean SPEED_SIMULATION_MODE = true;
+	public static boolean SPEED_SIMULATION_MODE = Common.SIMULATION_MODE;
 	
 	public enum State {
 	    Elsewhere, PossiblyWaitingForBus, WaitingForBus, PossiblyOnBus, OnBus
@@ -193,10 +193,14 @@ public class StateMachine {
 			if (lastDetectedType == DetectedType.Activity) {
 				mListener.onLogMessage("Detected activity");
 				mListener.onLogMessage("Most probable activity is "+getActivityNameFromType(lastActivityDetected.getMostProbableActivity().getType()) + " " + lastActivityDetected.getActivityConfidence(lastActivityDetected.getMostProbableActivity().getType()));
-				if (isMoving(lastActivityDetected.getMostProbableActivity().getType())){
-					mListener.onLogMessage("Getting Location");
+				if (Common.SIMULATION_MODE) {
 					locationHelper.getCurrentLocation();
-				}				
+				}else{				
+					if (isMoving(lastActivityDetected.getMostProbableActivity().getType())){
+						mListener.onLogMessage("Getting Location");
+						locationHelper.getCurrentLocation();
+					}
+				}
 			}else{
 				mListener.onLogMessage("Location obtained");
 				Location currentPosition = lastLocationChangeDetected;
