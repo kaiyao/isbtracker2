@@ -1,5 +1,7 @@
 package com.nus.cs4222.isbtracker;
 
+import java.util.List;
+
 import android.location.Location;
 
 public class BusStop {
@@ -7,11 +9,14 @@ public class BusStop {
 	private int mId;
 	private String mName;
 	private Location mLocation;
+	private List<Integer> mNextStopIds;
+	private List<BusStop> mNextStops;
 	
-	public BusStop(String name, Location location, int id){
+	public BusStop(String name, Location location, int id, List<Integer> nextStopIds){
 		mName = name;
 		mLocation = location;
 		mId = id;
+		mNextStopIds = nextStopIds;
 	}
 	
 	public BusStop(int id, float lat, float longi){
@@ -26,6 +31,10 @@ public class BusStop {
 	}
 
 
+	public int getId() {
+		return mId;
+	}
+
 	public String getName() {
 		return mName;
 	}
@@ -37,6 +46,18 @@ public class BusStop {
 	// Returns distance in meters
 	public float getDistanceFromLocation(Location l){
 		return l.distanceTo(mLocation);
+	}
+
+	public List<Integer> getNextStopIds() {
+		return mNextStopIds;
+	}
+
+	public List<BusStop> getNextStops() {
+		return mNextStops;
+	}
+
+	public void setNextStops(List<BusStop> nextStops) {
+		this.mNextStops = nextStops;
 	}
 
 }

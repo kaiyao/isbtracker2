@@ -4,18 +4,23 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import android.content.Context;
 import android.location.Location;
+import android.util.Log;
 
 public class BusStops {
 	
 	Context mContext;
 	List<BusStop> listOfStops;
+	Map<Integer, BusStop> stopsById;
 	
 	public BusStops(){
 		listOfStops = new ArrayList<BusStop>();
+		stopsById = new HashMap<Integer, BusStop>();
 		readStopsFromFile();		
 	}
 	
@@ -47,13 +52,33 @@ public class BusStops {
 				double mLatitude = Double.valueOf(lineParts[0]);
 				double mLongitude = Double.valueOf(lineParts[1]);
 				String mName = lineParts[2];
+				int mId = Integer.valueOf(lineParts[3]);
+				List<Integer> nextStopIds = new ArrayList<Integer>();
+				if (lineParts.length > 4){
+					String nextStopIdString = lineParts[4];
+					String[] nextStopIdStrings = nextStopIdString.split(" ");
+					for (String nextStopId : nextStopIdStrings){
+						nextStopIds.add(Integer.valueOf(nextStopId));
+					}
+				}
 				
 				Location l = new Location("");
 				l.setLatitude(mLatitude);
 				l.setLongitude(mLongitude);
-				BusStop bs = new BusStop(mName, l, 0);
-				listOfStops.add(bs);
+				BusStop bs = new BusStop(mName, l, mId, nextStopIds);
+				listOfStops.add(bs);				
+				stopsById.put(bs.getId(), bs);
 			}
+			
+			for (BusStop bs : listOfStops) {
+				List<BusStop> nextStops = new ArrayList<BusStop>();
+				for (Integer nextStopId : bs.getNextStopIds()){
+					nextStops.add(stopsById.get(nextStopId));
+				}
+				bs.setNextStops(nextStops);
+			}
+			Log.v("isbtracker.BusStops", "Read bus stop file");
+			
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
