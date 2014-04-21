@@ -1,8 +1,16 @@
 package com.nus.cs4222.isbtracker;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Vector;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -19,12 +27,12 @@ import org.apache.http.message.BasicNameValuePair;
  */
 public class ServerSideComms {
 	String host = "localhost";
-	String script = "/server/submit.php";
+	String path = "/server/";
 	int port = 80;
 	
 	void pushData(int bsStart, String timeStart, int waitTime) {
 		HttpClient httpclient = new DefaultHttpClient();
-	    HttpPost httppost = new HttpPost(host + ":" + port + script);
+	    HttpPost httppost = new HttpPost(host + ":" + port + path + "submit.php");
 
 	    try {
 	        // Add your data
@@ -44,5 +52,28 @@ public class ServerSideComms {
 	        // TODO Auto-generated catch block
 	    }
 		
+	}
+
+	void getData() {
+		String url = host + ":" +  port + path + "get.php";
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
+			String line = null;
+			
+			while((line = in.readLine()) != null) {
+				String[] params = line.split(",");
+				int bs = Integer.parseInt(params[0]);
+				String day = params[1];
+				String time = params[2];
+				double timeWait = Double.parseDouble(params[3]);
+			}
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 }
