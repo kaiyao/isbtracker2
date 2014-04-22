@@ -28,6 +28,10 @@ public class ServerSideComms {
 	String fileName = "Timings.csv";
 	String lastUpdateFileName = "LastUpdated.txt";
 	
+	public ServerSideComms(){
+		Context mContext = ApplicationContext.get();
+	}
+	
 	void pushData(int bsStart, String timeStart, double waitTime) {
 		HttpClient httpclient = new DefaultHttpClient();
 	    HttpPost httppost = new HttpPost(host + ":" + port + path + "submit.php");
@@ -65,12 +69,12 @@ public class ServerSideComms {
 	}
 
 	void getData() {
-		Context context = ApplicationContext.get();
+		
 		String url = host + ":" +  port + path + "get.php";
 		try {
 			BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
 			
-			File file = new File(context.getExternalFilesDir(null), fileName);
+			File file = new File(mContext.getExternalFilesDir(null), fileName);
 			FileOutputStream out = null;
 			try {
 				out = new FileOutputStream(file);
@@ -86,7 +90,7 @@ public class ServerSideComms {
 			    e.printStackTrace();
 			}
 			
-			File luf = new File(context.getExternalFilesDir(null), lastUpdateFileName);
+			File luf = new File(mContext.getExternalFilesDir(null), lastUpdateFileName);
 			BufferedWriter bw = new BufferedWriter(new FileWriter(luf));
 			bw.write(""+System.currentTimeMillis());
 			bw.close();
@@ -97,5 +101,26 @@ public class ServerSideComms {
 			e.printStackTrace();
 		}
 
+	}
+	
+	public Date getLastUpdated(){
+		Date lastUpdated = new Date(0);
+		
+		try {
+			File luf = new File(mContext.getExternalFilesDir(null), lastUpdateFileName);
+			BufferedReader bufferedReader = new BufferedReader(new FileReader(luf));
+			String line;
+
+			line = bufferedReader.readLine();		
+			while(line != null){
+				lastUpdated = new Date(Long.parseLong(line));
+			}
+			bufferedReader.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return lastUpdated;
 	}
 }
