@@ -56,9 +56,13 @@ public class CollectedDataCache {
 			while ((line = reader.readLine()) != null) {
 			    String[] lineParts = line.split(",");
 			    comm.pushData(Integer.valueOf(lineParts[2]), lineParts[0], Double.valueOf(lineParts[1]));
-			}
-			
+			}			
 			reader.close();
+
+			// Flush local cache after uploading
+			FileWriter fwriter = new FileWriter(f, false);
+			fwriter.close();
+			
 		} catch (NumberFormatException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
