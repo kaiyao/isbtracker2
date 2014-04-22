@@ -26,6 +26,7 @@ public class ServerSideComms {
 	String path = "/server/";
 	int port = 8000;
 	String fileName = "Timings.csv";
+	String lastUpdateFileName = "LastUpdated.txt";
 	
 	void pushData(int bsStart, String timeStart, double waitTime) {
 		HttpClient httpclient = new DefaultHttpClient();
@@ -85,11 +86,14 @@ public class ServerSideComms {
 			    e.printStackTrace();
 			}
 			
-		} catch (MalformedURLException e) {
+			File luf = new File(context.getExternalFilesDir(null), lastUpdateFileName);
+			BufferedWriter bw = new BufferedWriter(new FileWriter(luf));
+			bw.write(""+System.currentTimeMillis());
+			bw.close();
 			
+		} catch (MalformedURLException e) {			
 			e.printStackTrace();
-		} catch (IOException e) {
-			
+		} catch (IOException e) {			
 			e.printStackTrace();
 		}
 
