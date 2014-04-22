@@ -81,8 +81,8 @@ public class WaitingTimes {
 	
 	public double getEstimatedTime(int bs, String day, Date time) {
 		for(WaitingTime wt : listOfWaitingTime) {
-			if(day.compareTo(wt.day) == 0) {
-				if (Math.abs(time.getTime() - wt.time.getTime()) >= 15*60*1000) {
+			if(day.equalsIgnoreCase(wt.day)) {
+				if (Math.abs(time.getTime() - wt.time.getTime()) <= 15*60*1000) {
 					return wt.waitTime;
 				}
 			}
