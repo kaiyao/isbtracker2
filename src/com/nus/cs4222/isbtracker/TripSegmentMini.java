@@ -18,6 +18,10 @@ public class TripSegmentMini {
 
 	public BusStop getBusStop() {
 		return busStop;
+	}
+
+	public void setBusStop(BusStop busStop) {
+		this.busStop = busStop;
 	}	
 
 }
