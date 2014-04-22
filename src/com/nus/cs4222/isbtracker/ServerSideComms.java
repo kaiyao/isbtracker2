@@ -34,7 +34,7 @@ public class ServerSideComms {
 	    try {
 	        // Add your data
 	        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-	        nameValuePairs.add(new BasicNameValuePair("bsStart", Integer.toString(bsStart)));
+	        nameValuePairs.add(new BasicNameValuePair("bsid", Integer.toString(bsStart)));
 	        nameValuePairs.add(new BasicNameValuePair("timeStart", timeStart));
 	        nameValuePairs.add(new BasicNameValuePair("timeWait", Double.toString(waitTime)));
 	        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
@@ -67,24 +67,24 @@ public class ServerSideComms {
 		Context context = ApplicationContext.get();
 		String url = host + ":" +  port + path + "get.php";
 		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
-			String line = null;
-			
-			StringBuffer sb = new StringBuffer();
-			while((line = in.readLine()) != null) {
-				sb.append(line);
-			}
+			BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
 			
 			File file = new File(context.getExternalFilesDir(null), fileName);
-			FileOutputStream os = null;
+			FileOutputStream out = null;
 			try {
-			    os = new FileOutputStream(file);
+				out = new FileOutputStream(file);
+				
+				final byte data[] = new byte[1024];
+		        int count;
+		        while ((count = in.read(data, 0, 1024)) != -1) {
+		        	out.write(data, 0, count);
+		        }
+		        out.close();
 			} catch (FileNotFoundException e) {
 			    System.err.println("Error while creating FileOutputStream");
 			    e.printStackTrace();
 			}
-			os.write(sb.toString().getBytes());
-			os.close();
+			
 		} catch (MalformedURLException e) {
 			
 			e.printStackTrace();
