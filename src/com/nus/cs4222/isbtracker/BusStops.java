@@ -11,17 +11,26 @@ import java.util.Map;
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
+import android.util.SparseArray;
 
 public class BusStops {
 	
-	Context mContext;
-	List<BusStop> listOfStops;
-	Map<Integer, BusStop> stopsById;
+	private static BusStops theOne;
 	
-	public BusStops(){
+	private List<BusStop> listOfStops;
+	private SparseArray<BusStop> stopsById;
+	
+	private BusStops(){
 		listOfStops = new ArrayList<BusStop>();
-		stopsById = new HashMap<Integer, BusStop>();
+		stopsById = new SparseArray<BusStop>();
 		readStopsFromFile();		
+	}
+	
+	public static BusStops getInstance(){
+		if (theOne == null){
+			theOne = new BusStops();
+		}
+		return theOne;
 	}
 	
 	public BusStop getNearestStop(Location l){
@@ -83,6 +92,14 @@ public class BusStops {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+	}
+
+	public List<BusStop> getListOfStops() {
+		return listOfStops;
+	}
+
+	public BusStop getStopById(int key) {
+		return stopsById.get(key);
 	}
 
 }

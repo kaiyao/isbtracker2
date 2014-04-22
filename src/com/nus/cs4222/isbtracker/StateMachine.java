@@ -58,7 +58,7 @@ public class StateMachine {
 	public StateMachine(Context context){
 		mContext = context;
 
-		busStops = new BusStops();
+		busStops = BusStops.getInstance();
 		busRoutes = new BusRoutes();
 
 		mIsTracking = false;

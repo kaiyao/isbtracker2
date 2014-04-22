@@ -26,11 +26,11 @@ public class QueryActivity extends FragmentActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_query);
 		
-		busStops = new BusStops();
+		busStops = BusStops.getInstance();
 		
 		busStopsSpinner = (Spinner) findViewById(R.id.bus_stops_spinner);
 		List<String> list = new ArrayList<String>();
-		for (BusStop bs : busStops.listOfStops){
+		for (BusStop bs : busStops.getListOfStops()){
 			list.add(bs.getName());
 		}
 		ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>(this,
