@@ -62,22 +62,27 @@ public class WaitingTimes {
 		double result = 0; 
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE", Locale.US); 
 		SimpleDateFormat dfTimeOnly = new SimpleDateFormat("HH:mm:ss");
+		String asWeek = dateFormat.format(date);
+		String timeOnlyS = dfTimeOnly.format(date);
+		try {
+			Date timeOnly = dfTimeOnly.parse(timeOnlyS);
+			result = getEstimatedTime(bs, asWeek, timeOnly);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	public double getEstimatedTime(int bs, String day, Date time) {
 		for(WaitingTime wt : listOfWaitingTime) {
-			String asWeek = dateFormat.format(date);
-			if(asWeek.compareTo(wt.day) == 0) {
-				String timeOnlyS = dfTimeOnly.format(date);
-				try {
-					Date timeOnly = dfTimeOnly.parse(timeOnlyS);
-					if (Math.abs(timeOnly.getTime() - wt.time.getTime()) >= 15*60*1000) {
-						return wt.waitTime;
-					}
-				} catch (ParseException e) {
-					e.printStackTrace();
+			if(day.compareTo(wt.day) == 0) {
+				if (Math.abs(time.getTime() - wt.time.getTime()) >= 15*60*1000) {
+					return wt.waitTime;
 				}
 			}
 			
 		}
+		return 0;
 		
-		return result;
 	}
 }
