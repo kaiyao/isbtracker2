@@ -38,20 +38,4 @@ public class WaitingTime {
 		this.waitTime = waitTime;
 	}
 
-	
-	@SuppressLint("DefaultLocale")
-	public String getLine(){
-		return String.format(Locale.US, "%d,%f,%d", time, waitTime, busstop.getId());
-	}
-	
-	public WaitingTime(String line){
-		String[] lineParts = line.split(",");
-		if (lineParts.length >= 3){
-			time = new Date(Long.valueOf(lineParts[0]));
-			waitTime = Long.valueOf(lineParts[1]);
-			busstop = BusStops.getInstance().getStopById(Integer.valueOf(lineParts[2]));
-		}
-	}
-
-
 }
