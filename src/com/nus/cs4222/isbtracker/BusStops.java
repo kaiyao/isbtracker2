@@ -24,6 +24,10 @@ public class BusStops {
 		readStopsFromFile();		
 	}
 	
+	public BusStop getStopById(int id) {
+		return stopsById.get(id);
+	}
+	
 	public BusStop getNearestStop(Location l){
 		float minDistance = Float.POSITIVE_INFINITY;
 		BusStop nearestStop = null;

@@ -4,9 +4,17 @@ import java.util.Date;
 
 public class WaitingTime {
 	Date time;
-	int waitTime; //minutes
+	double waitTime; //minutes
+	String day;
 	BusStop busstop;
 
+	public WaitingTime(BusStop bs, String d, Date t, double waitTime2) {
+		time = t;
+		day = d;
+		waitTime = waitTime2;
+		busstop = bs;
+	}
+	
 	public WaitingTime(BusStop bs, int wt) {
 		waitTime = wt;
 		busstop = bs;
@@ -20,7 +28,7 @@ public class WaitingTime {
 		this.time = time;
 	}
 
-	public int getWaitTime() {
+	public double getWaitTime() {
 		return waitTime;
 	}
 
