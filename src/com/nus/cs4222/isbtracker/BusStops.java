@@ -15,11 +15,7 @@ import android.util.SparseArray;
 
 public class BusStops {
 	
-	private static BusStops theOne;
-	Context mContext;
-	List<BusStop> listOfStops;
-	Map<Integer, BusStop> stopsById;
-	
+	private static BusStops theOne;	
 	private List<BusStop> listOfStops;
 	private SparseArray<BusStop> stopsById;
 	
