@@ -49,6 +49,8 @@ public class StateMachine {
 	private ActivityRecognitionHelper activityRecognition;
 	private LocationHelper locationHelper;
 	
+	private Time lastWaitingTimeLogEnteredStateTime;
+	
 	private StateMachineListener mListener;
 
 	private boolean mIsTracking;
@@ -184,6 +186,9 @@ public class StateMachine {
 			
 			disableContinousLocationAndSetLongActivityDetectionInterval();
 			
+			// Reset waiting time logger
+			lastWaitingTimeLogEnteredStateTime = null;
+			
 			// Check current position
 			if (lastDetectedType == DetectedType.Activity) {
 				mListener.onLogMessage("Detected activity");
@@ -236,31 +241,13 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is possibly waiting for bus");
 
-			enableContinousGpsAndSetShortActivityDetectionInterval();
-			
-			// Check time spent waiting for bus at bus stop
-			for (StateChange stateChange : stateChangeList) {
-				if (stateChange.getState() == State.Elsewhere) {
-					break;
-				}
-				
-				long waitingTime = 0;
-				if (stateChange.getState() == State.PossiblyWaitingForBus){
-					waitingTime = 30000;
-				}else if (stateChange.getState() == State.WaitingForBus){
-					waitingTime = getCurrentTime().toMillis(false) - stateChange.getTimeEnteredState().toMillis(false) + 30000;
-				}
-				
-				if (waitingTime > 0) {
-					// Process waiting time here
-					Log.d("isbtracker.StateMachine", "Waiting Time" + waitingTime);
-				}
-			}
-			
+			enableContinousGpsAndSetShortActivityDetectionInterval();			
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
+				
+				stateChangeList.getFirst().setBusStopForState(nearestStop);
 				
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 				
@@ -295,6 +282,8 @@ public class StateMachine {
 				Location currentPosition = lastLocationChangeDetected;
 				BusStop nearestStop = busStops.getNearestStop(currentPosition);
 				
+				stateChangeList.getFirst().setBusStopForState(nearestStop);
+				
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 			
 				// Initialize trip segments
@@ -316,6 +305,42 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is possibly on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+			
+			// ********************************************
+			// Check time spent waiting for bus at bus stop
+			// ********************************************
+			for (StateChange stateChange : stateChangeList) {
+				if (stateChange.getState() == State.Elsewhere) {
+					// If we encounter elsewhere when we look back at the history, it means
+					// a bug, probably. Since the user cannot transition into the on bus states
+					// from elsewhere
+					break;
+				}
+				
+				long waitingTime = 0;
+				if (stateChange.getState() == State.PossiblyWaitingForBus){
+					waitingTime = 30000;
+				}else if (stateChange.getState() == State.WaitingForBus){
+					waitingTime = getCurrentTime().toMillis(false) - stateChange.getTimeEnteredState().toMillis(false) + 30000;
+				}
+				
+				if (waitingTime > 0) {
+					// Process waiting time here
+					
+					// We check that it is not the same as the bus stop in the 
+					// last logged time to prevent duplicates
+					if (lastWaitingTimeLogEnteredStateTime != stateChange.getTimeEnteredState()) {
+						lastWaitingTimeLogEnteredStateTime = stateChange.getTimeEnteredState();
+						Log.d("isbtracker.StateMachine", "Waiting Time" + stateChange.getBusStopForState().getName() + " " + waitingTime);
+						CollectedDataCache.getInstance().logWaitingTime(stateChange.getBusStopForState(), (float)waitingTime/60000);
+					}
+					
+					// We break here as this means that we have already encountered a waiting at bus stop
+					// when we check from the current state backwards
+					// We don't want to further check even older waiting at bus stop states
+					break;
+				}
+			}
 			
 			if (lastLocationChangeDetected != null && tripSegmentsList != null) {
 				Location currentPosition = lastLocationChangeDetected;

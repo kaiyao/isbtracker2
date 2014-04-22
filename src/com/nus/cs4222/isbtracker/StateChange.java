@@ -6,6 +6,7 @@ public class StateChange {
 	
 	private StateMachine.State state;
 	private Time timeEnteredState;
+	private BusStop busStopForState;
 	
 	public StateChange(StateMachine.State state, Time timeEnteredState){
 		this.state = state;
@@ -18,6 +19,14 @@ public class StateChange {
 	
 	public Time getTimeEnteredState() {
 		return timeEnteredState;
+	}
+
+	public BusStop getBusStopForState() {
+		return busStopForState;
+	}
+
+	public void setBusStopForState(BusStop busStopForState) {
+		this.busStopForState = busStopForState;
 	}
 	
 	

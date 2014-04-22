@@ -25,7 +25,7 @@ public class ServerSideComms {
 	int port = 80;
 	String fileName = "Timings.csv";
 	
-	void pushData(int bsStart, String timeStart, int waitTime) {
+	void pushData(int bsStart, String timeStart, double waitTime) {
 		HttpClient httpclient = new DefaultHttpClient();
 	    HttpPost httppost = new HttpPost(host + ":" + port + path + "submit.php");
 
@@ -34,7 +34,7 @@ public class ServerSideComms {
 	        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
 	        nameValuePairs.add(new BasicNameValuePair("bsStart", Integer.toString(bsStart)));
 	        nameValuePairs.add(new BasicNameValuePair("timeStart", timeStart));
-	        nameValuePairs.add(new BasicNameValuePair("timeWait", Integer.toString(waitTime)));
+	        nameValuePairs.add(new BasicNameValuePair("timeWait", Double.toString(waitTime)));
 	        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 	        // Execute HTTP Post Request

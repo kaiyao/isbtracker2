@@ -8,18 +8,18 @@ public class WaitingTime {
 	Date time;
 	double waitTime; //minutes
 	String day;
-	BusStop busstop;
+	BusStop busStop;
 
 	public WaitingTime(BusStop bs, String d, Date t, double waitTime2) {
 		time = t;
 		day = d;
 		waitTime = waitTime2;
-		busstop = bs;
+		busStop = bs;
 	}
 	
 	public WaitingTime(BusStop bs, int wt) {
 		waitTime = wt;
-		busstop = bs;
+		busStop = bs;
 	}
 
 	public Date getTime() {
@@ -37,20 +37,5 @@ public class WaitingTime {
 	public void setWaitTime(int waitTime) {
 		this.waitTime = waitTime;
 	}
-	
-	@SuppressLint("DefaultLocale")
-	public String getLine(){
-		return String.format(Locale.US, "%d,%f,%d", time, waitTime, busStop.getId());
-	}
-	
-	public WaitingTime(String line){
-		String[] lineParts = line.split(",");
-		if (lineParts.length >= 3){
-			time = new Date(Long.valueOf(lineParts[0]));
-			waitTime = Long.valueOf(lineParts[1]);
-			busStop = BusStops.getInstance().getStopById(Integer.valueOf(lineParts[2]));
-		}
-	}
-
 
 }

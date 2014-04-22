@@ -24,7 +24,7 @@ public class WaitingTimes {
 	public WaitingTimes() {
 		listOfWaitingTime = new ArrayList<WaitingTime>();
 		readTimesFromFile();
-		busStops = new BusStops();
+		busStops = BusStops.getInstance();
 	
 	}
 	
@@ -32,7 +32,7 @@ public class WaitingTimes {
 		try {
 			
 			Context context = ApplicationContext.get();
-			SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
+			SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss", Locale.US);
 			InputStreamReader is = new InputStreamReader(context.openFileInput("Timings.csv"));
 			BufferedReader reader = new BufferedReader(is);
 			String line;
@@ -61,7 +61,7 @@ public class WaitingTimes {
 	public double getEstimatedTime(Date date, int bs) {
 		double result = 0; 
 		SimpleDateFormat dateFormat = new SimpleDateFormat("EEEE", Locale.US); 
-		SimpleDateFormat dfTimeOnly = new SimpleDateFormat("HH:mm:ss");
+		SimpleDateFormat dfTimeOnly = new SimpleDateFormat("HH:mm:ss", Locale.US);
 		for(WaitingTime wt : listOfWaitingTime) {
 			String asWeek = dateFormat.format(date);
 			if(asWeek.compareTo(wt.day) == 0) {
