@@ -402,7 +402,9 @@ public class StateMachine {
 				tripSegmentsList = new LinkedList<TripSegmentMini>();
 			}
 			
+			Log.d("isbtracker.statemachine.logtripsegment", "Trip logger");
 			if (tripSegmentsList.isEmpty()){
+				Log.d("isbtracker.statemachine.logtripsegment", "Trip logger empty");
 				// If it is the first stop, we try to look for the nearest stop first
 				// Then we look back at the states to see if there's a waitingForBus state
 				// those are more accurate as the bus may have moved considerably before the
@@ -421,7 +423,10 @@ public class StateMachine {
 				Log.d("isbtracker.statemachine.logtripsegment", "First Stop: " + startingStop.getName());
 			}else{
 				
+				Log.d("isbtracker.statemachine.logtripsegment", "Trip logger not empty");
+				
 				if (tripSegmentsList.size() == 1) {
+					Log.d("isbtracker.statemachine.logtripsegment", "Trip logger size 1");
 					// If this is the second stop in the trip, we try to correct for the first stop
 					// in case the first stop was recorded wrongly
 					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
@@ -433,7 +438,9 @@ public class StateMachine {
 					}
 					
 					for (BusStop pbs : possibleFirstStops){
+						Log.d("isbtracker.statemachine.logtripsegment", "Each Possible First Stop: " + pbs.getName());
 						for (BusStop bs : pbs.getNextStops()){
+							Log.d("isbtracker.statemachine.logtripsegment", "Each Possible Next Stop: " + bs.getName());
 							if (bs.getDistanceFromLocation(currentPosition) < 30) {
 								tripSegmentsList.getFirst().setBusStop(pbs);
 								tripSegmentsList.addFirst(new TripSegmentMini(bs, getCurrentTime()));
@@ -447,6 +454,8 @@ public class StateMachine {
 					
 					
 				}else{
+					Log.d("isbtracker.statemachine.logtripsegment", "Trip logger size >1");
+					
 					// Using the last stop, we "look out" for the next possible bus stop
 					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
 					
