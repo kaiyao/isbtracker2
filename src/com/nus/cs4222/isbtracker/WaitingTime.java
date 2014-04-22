@@ -40,7 +40,7 @@ public class WaitingTime {
 	
 	@SuppressLint("DefaultLocale")
 	public String getLine(){
-		return String.format(Locale.US, "%d,%f,%d", time, waitTime, busStop.getId());
+		return String.format(Locale.US, "%d,%f,%d", time, waitTime, busstop.getId());
 	}
 	
 	public WaitingTime(String line){
@@ -48,7 +48,7 @@ public class WaitingTime {
 		if (lineParts.length >= 3){
 			time = new Date(Long.valueOf(lineParts[0]));
 			waitTime = Long.valueOf(lineParts[1]);
-			busStop = BusStops.getInstance().getStopById(Integer.valueOf(lineParts[2]));
+			busstop = BusStops.getInstance().getStopById(Integer.valueOf(lineParts[2]));
 		}
 	}
 

@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 import android.content.Context;
 import android.location.Location;
 import android.util.Log;
@@ -17,8 +14,6 @@ public class BusStops {
 	
 	private static BusStops theOne;
 	Context mContext;
-	List<BusStop> listOfStops;
-	Map<Integer, BusStop> stopsById;
 	
 	private List<BusStop> listOfStops;
 	private SparseArray<BusStop> stopsById;

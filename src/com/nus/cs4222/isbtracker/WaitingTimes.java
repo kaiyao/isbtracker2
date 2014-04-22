@@ -24,7 +24,7 @@ public class WaitingTimes {
 	public WaitingTimes() {
 		listOfWaitingTime = new ArrayList<WaitingTime>();
 		readTimesFromFile();
-		busStops = new BusStops();
+		busStops = BusStops.getInstance();
 	
 	}
 	
