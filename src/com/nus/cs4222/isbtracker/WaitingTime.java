@@ -1,15 +1,18 @@
 package com.nus.cs4222.isbtracker;
 
+import android.annotation.SuppressLint;
 import java.util.Date;
+import java.util.Locale;
 
 public class WaitingTime {
 	Date time;
-	int waitTime; //minutes
-	BusStop busstop;
+	long waitTime; // milliseconds
+	BusStop busStop;
 
-	public WaitingTime(BusStop bs, int wt) {
-		waitTime = wt;
-		busstop = bs;
+	public WaitingTime(BusStop bs, long waitTime) {
+		this.waitTime = waitTime;
+		this.busStop = bs;
+		this.time = new Date();
 	}
 
 	public Date getTime() {
@@ -20,12 +23,27 @@ public class WaitingTime {
 		this.time = time;
 	}
 
-	public int getWaitTime() {
+	public long getWaitTime() {
 		return waitTime;
 	}
 
 	public void setWaitTime(int waitTime) {
 		this.waitTime = waitTime;
 	}
+	
+	@SuppressLint("DefaultLocale")
+	public String getLine(){
+		return String.format(Locale.US, "%d,%f,%d", time, waitTime, busStop.getId());
+	}
+	
+	public WaitingTime(String line){
+		String[] lineParts = line.split(",");
+		if (lineParts.length >= 3){
+			time = new Date(Long.valueOf(lineParts[0]));
+			waitTime = Long.valueOf(lineParts[1]);
+			busStop = BusStops.getInstance().getStopById(Integer.valueOf(lineParts[2]));
+		}
+	}
+
 
 }
