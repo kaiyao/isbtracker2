@@ -1,18 +1,9 @@
 package com.nus.cs4222.isbtracker;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Vector;
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -21,14 +12,18 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
+import android.content.Context;
+
 /**
  * Used for communications with the server.
  * @author Gabriel
  */
 public class ServerSideComms {
+	Context mContext;
 	String host = "localhost";
 	String path = "/server/";
 	int port = 80;
+	String fileName = "Timings.csv";
 	
 	void pushData(int bsStart, String timeStart, int waitTime) {
 		HttpClient httpclient = new DefaultHttpClient();
@@ -43,7 +38,7 @@ public class ServerSideComms {
 	        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 	        // Execute HTTP Post Request
-	        HttpResponse response = httpclient.execute(httppost);
+	        httpclient.execute(httppost);
 
 	    } catch (ClientProtocolException e) {
 	        // TODO Auto-generated catch block
@@ -55,23 +50,32 @@ public class ServerSideComms {
 	}
 
 	void getData() {
+		Context context = ApplicationContext.get();
 		String url = host + ":" +  port + path + "get.php";
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(new URL(url).openStream()));
 			String line = null;
 			
+			StringBuffer sb = new StringBuffer();
 			while((line = in.readLine()) != null) {
-				String[] params = line.split(",");
-				int bs = Integer.parseInt(params[0]);
-				String day = params[1];
-				String time = params[2];
-				double timeWait = Double.parseDouble(params[3]);
+				sb.append(line);
 			}
+			
+			File file = new File(context.getExternalFilesDir(null), fileName);
+			FileOutputStream os = null;
+			try {
+			    os = new FileOutputStream(file);
+			} catch (FileNotFoundException e) {
+			    System.err.println("Error while creating FileOutputStream");
+			    e.printStackTrace();
+			}
+			os.write(sb.toString().getBytes());
+			os.close();
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 
