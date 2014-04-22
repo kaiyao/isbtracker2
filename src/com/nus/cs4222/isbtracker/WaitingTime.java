@@ -1,8 +1,6 @@
 package com.nus.cs4222.isbtracker;
 
-import android.annotation.SuppressLint;
 import java.util.Date;
-import java.util.Locale;
 
 public class WaitingTime {
 	Date time;

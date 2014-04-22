@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import android.content.*;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -32,6 +33,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.nus.cs4222.isbtracker.R;
 import com.nus.cs4222.isbtracker.route.BusRoutes;
@@ -270,5 +272,34 @@ public class MainActivity extends FragmentActivity {
     	}else{
     		locationGetter.getContinuousLocation();
     	}
+    }
+    
+    private class SyncDataTask extends AsyncTask<Void, Integer, Long> {
+        // Do the long-running work in here
+    	protected Long doInBackground(Void... params) {
+    		CollectedDataCache c = CollectedDataCache.getInstance();
+        	c.uploadWaitingTime();
+        	
+        	ServerSideComms s = new ServerSideComms();
+        	s.getData();
+        	
+			return (long) 0;
+		}
+
+        // This is called each time you call publishProgress()
+        protected void onProgressUpdate(Integer... progress) {
+            
+        }
+
+        // This is called when doInBackground() is finished
+        protected void onPostExecute(Long result) {
+        	Toast.makeText(ApplicationContext.get(),
+                    "Sync complete", Toast.LENGTH_SHORT).show();
+        }		
+    }
+    
+    public void syncData(View v){
+    	new SyncDataTask().execute();
+    	
     }
 }

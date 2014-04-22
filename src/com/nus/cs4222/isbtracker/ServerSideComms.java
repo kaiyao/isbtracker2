@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -13,6 +14,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
 import android.content.Context;
+import android.util.Log;
 
 /**
  * Used for communications with the server.
@@ -20,9 +22,9 @@ import android.content.Context;
  */
 public class ServerSideComms {
 	Context mContext;
-	String host = "localhost";
+	String host = "http://limyx.no-ip.org";
 	String path = "/server/";
-	int port = 80;
+	int port = 8000;
 	String fileName = "Timings.csv";
 	
 	void pushData(int bsStart, String timeStart, double waitTime) {
@@ -38,7 +40,19 @@ public class ServerSideComms {
 	        httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 	        // Execute HTTP Post Request
-	        httpclient.execute(httppost);
+	        HttpResponse response = httpclient.execute(httppost);
+	        
+	        StringBuilder inputStringBuilder = new StringBuilder();
+	        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent(), "UTF-8"));
+	        String line = bufferedReader.readLine();
+	        while(line != null){
+	            inputStringBuilder.append(line);inputStringBuilder.append('\n');
+	            line = bufferedReader.readLine();
+	        }
+	        System.out.println(inputStringBuilder.toString());
+
+	        Log.d("isbtracker.serversidecomms.push", inputStringBuilder.toString());
+	        
 
 	    } catch (ClientProtocolException e) {
 	        // TODO Auto-generated catch block

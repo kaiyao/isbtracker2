@@ -76,13 +76,21 @@
         android:layout_toRightOf="@+id/get_current_location"
         android:onClick="getContinuousLocation"
         android:text="Periodic Updates" />
+    
+    <Button
+        android:id="@+id/sync_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/get_last_location"
+        android:onClick="syncData"
+        android:text="Sync Data" />
 
     <TextView
         android:id="@+id/current_state_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_below="@+id/get_last_location"
+        android:layout_below="@+id/sync_data"
         android:text="Current State"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
