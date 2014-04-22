@@ -6,13 +6,20 @@ import java.util.Locale;
 
 public class WaitingTime {
 	Date time;
-	long waitTime; // milliseconds
-	BusStop busStop;
+	double waitTime; //minutes
+	String day;
+	BusStop busstop;
 
-	public WaitingTime(BusStop bs, long waitTime) {
-		this.waitTime = waitTime;
-		this.busStop = bs;
-		this.time = new Date();
+	public WaitingTime(BusStop bs, String d, Date t, double waitTime2) {
+		time = t;
+		day = d;
+		waitTime = waitTime2;
+		busstop = bs;
+	}
+	
+	public WaitingTime(BusStop bs, int wt) {
+		waitTime = wt;
+		busstop = bs;
 	}
 
 	public Date getTime() {
@@ -23,7 +30,7 @@ public class WaitingTime {
 		this.time = time;
 	}
 
-	public long getWaitTime() {
+	public double getWaitTime() {
 		return waitTime;
 	}
 
