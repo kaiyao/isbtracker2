@@ -1,10 +1,16 @@
 package com.nus.cs4222.isbtracker;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -54,7 +60,34 @@ public class QueryActivity extends FragmentActivity {
 		
 		startTimePicker = (TimePicker) findViewById(R.id.start_time_picker);
 		
-		waitingTimeTextView = (TextView) findViewById(R.id.waiting_time);
+		waitingTimeTextView = (TextView) findViewById(R.id.waiting_time_textview);
+	}
+
+	public void queryWaitingTime(View v){
+		WaitingTimes wt = new WaitingTimes();
+		
+		BusStop selectedBusStop = null;
+		String selectedBusStopString = (String) busStopsSpinner.getSelectedItem();
+		for (BusStop bs : busStops.getListOfStops()){
+			if (bs.getName().equalsIgnoreCase(selectedBusStopString)){
+				selectedBusStop = bs;
+				break;
+			}
+		}
+		
+		String selectedDay = (String) daySpinner.getSelectedItem();		
+		
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("hh:mm");
+			Date selectedTime;
+			selectedTime = sdf.parse(startTimePicker.getCurrentHour() + ":" + startTimePicker.getCurrentMinute());
+			waitingTimeTextView.setText("Avg: " + wt.getEstimatedTime(selectedBusStop.getId(), selectedDay, selectedTime));
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+				
+		
 	}
 
 	

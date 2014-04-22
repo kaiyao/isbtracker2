@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,7 +6,8 @@
     android:orientation="vertical" >
 
     <TableLayout
-        android:layout_width="wrap_content"
+        android:id="@+id/tableLayout1"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" >
@@ -27,7 +27,6 @@
                 android:id="@+id/bus_stops_spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-
         </TableRow>
 
         <TableRow
@@ -45,7 +44,6 @@
                 android:id="@+id/day_spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-
         </TableRow>
 
         <TableRow
@@ -63,7 +61,6 @@
                 android:id="@+id/start_time_picker"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-
         </TableRow>
 
         <TableRow
@@ -75,16 +72,24 @@
                 android:id="@+id/textView4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Waiting Time" />
+                android:text="Query" />
 
-            <TextView
-                android:id="@+id/waiting_time"
+            <Button
+                android:id="@+id/button1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Please select"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
-
+                android:onClick="queryWaitingTime"
+                android:text="Query" />
         </TableRow>
     </TableLayout>
+
+    <TextView
+        android:id="@+id/waiting_time_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/tableLayout1"
+        android:text="Tap query to query"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
 
 </RelativeLayout>

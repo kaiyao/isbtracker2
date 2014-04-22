@@ -1,6 +1,10 @@
 package com.nus.cs4222.isbtracker;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DateFormatSymbols;
@@ -20,11 +24,12 @@ public class WaitingTimes {
 	Context mContext;
 	List<WaitingTime> listOfWaitingTime;
 	BusStops busStops;
+	private String fileName = "Timings.csv";
 	
 	public WaitingTimes() {
-		listOfWaitingTime = new ArrayList<WaitingTime>();
-		readTimesFromFile();
+		listOfWaitingTime = new ArrayList<WaitingTime>();		
 		busStops = BusStops.getInstance();
+		readTimesFromFile();
 	
 	}
 	
@@ -33,12 +38,13 @@ public class WaitingTimes {
 			
 			Context context = ApplicationContext.get();
 			SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
-			InputStreamReader is = new InputStreamReader(context.openFileInput("Timings.csv"));
+			InputStreamReader is = new FileReader(new File(context.getExternalFilesDir(null), fileName));
 			BufferedReader reader = new BufferedReader(is);
 			String line;
 			while ((line = reader.readLine()) != null) {
 				String[] lineParts = line.split(",");
 				int busstopID = Integer.parseInt(lineParts[0]);
+				Log.v("isbtracker.waitingtimes.readtimesfromfile", ""+busstopID);
 				BusStop bs = busStops.getStopById(busstopID);
 				String day = lineParts[1];
 				Date time = sdf.parse(lineParts[2]);
