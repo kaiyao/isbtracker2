@@ -18,13 +18,17 @@ import nus.dtn.util.Descriptor;
 import nus.dtn.util.DtnMessage;
 import nus.dtn.util.DtnMessageException;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -134,10 +138,12 @@ public class DtnComms {
                 	
                 // Data part
                 	try {
+                		String content = new Scanner(new File(mContext.getExternalFilesDir(null), "Timings.csv")).useDelimiter("\\Z").next();
+                		
 						Log.d(LOGTAG, "Building data");
 						message.addData()
 						.writeLong(comm.getLastUpdated().getTime())
-						.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
+						.writeString(content);
 						
 						Log.d(LOGTAG, "Sending message");
 						fwdLayer.sendMessage ( descriptor , message , "everyone" , null );
@@ -145,6 +151,9 @@ public class DtnComms {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (ForwardingLayerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (FileNotFoundException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
@@ -174,15 +183,25 @@ public class DtnComms {
                 message.switchToData();
                 Long remoteLastUpdatedTimeLong = message.readLong();
                 Date remoteLastUpdatedTime = new Date(remoteLastUpdatedTimeLong);
-                int numFiles = message.getNumFiles();
-                File f = message.getFile(0);
+                String file = message.readString();
                 
                 ServerSideComms comm = new ServerSideComms();
                 Log.i("Dtn", "Received Message");
                 Log.i("Dtn", "Local:" + remoteLastUpdatedTime + " Remote:" + comm.getLastUpdated());
                 if (comm.getLastUpdated().before(remoteLastUpdatedTime)){
         			File destFile = new File(mContext.getExternalFilesDir(null), "Timings.csv");
-        			copy(f, destFile);
+
+        			FileWriter fstream = new FileWriter(destFile);
+        			BufferedWriter out = new BufferedWriter(fstream);
+        			out.write(file);
+        			  //Close the output stream
+        			out.close();
+        			
+        			String lastUpdateFileName = "LastUpdated.txt";
+        			File luf = new File(mContext.getExternalFilesDir(null), lastUpdateFileName);
+        			BufferedWriter bw = new BufferedWriter(new FileWriter(luf));
+        			bw.write(""+remoteLastUpdatedTime.getTime());
+        			bw.close();
         			
         			createToast ("Received updated timings from " + source);
                 }
