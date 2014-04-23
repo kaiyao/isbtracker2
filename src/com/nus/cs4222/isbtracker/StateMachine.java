@@ -56,6 +56,8 @@ public class StateMachine {
 	
 	private StateMachineListener mListener;
 
+    private DtnComms dtnComms;
+
 	private boolean mIsTracking;
 	
 	private final float DISTANCE_LIMIT = 50.0f;	
@@ -70,6 +72,8 @@ public class StateMachine {
 		
 		stateChangeList = new LinkedList<StateChange>();
 		tripSegmentsList = new LinkedList<TripSegmentMini>();
+
+        dtnComms = new DtnComms();
 	}
 
 	public void activityDetected(ActivityRecognitionResult result){
@@ -189,6 +193,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is elsewhere");
 			
 			disableContinousLocationAndSetLongActivityDetectionInterval();
+            dtnComms.stop();
 			
 			// Reset waiting time logger
 			lastWaitingTimeLogEnteredStateTime = null;
@@ -248,7 +253,8 @@ public class StateMachine {
 			
 			mListener.onLogMessage("Current State is possibly waiting for bus");
 
-			enableContinousGpsAndSetShortActivityDetectionInterval();			
+			enableContinousGpsAndSetShortActivityDetectionInterval();
+            dtnComms.start();
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -281,6 +287,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is waiting for bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+            dtnComms.start();
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -306,6 +313,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is possibly on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+            dtnComms.stop();
 			
 			// ********************************************
 			// Check time spent waiting for bus at bus stop
@@ -367,6 +375,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
+            dtnComms.stop();
 			
 			logTripSegment();
 			
