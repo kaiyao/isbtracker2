@@ -130,7 +130,7 @@ public class DtnComms {
                 
                 ServerSideComms comm = new ServerSideComms();
                 
-                if (comm.getLastUpdated() != null) {
+                if (comm.getLastUpdated() != null && comm.getLastUpdated().after(new Date(0))) {
                 	
                 // Data part
                 	try {
@@ -178,6 +178,8 @@ public class DtnComms {
                 File f = message.getFile(0);
                 
                 ServerSideComms comm = new ServerSideComms();
+                Log.i("Dtn", "Received Message");
+                Log.i("Dtn", "Local:" + remoteLastUpdatedTime + " Remote:" + comm.getLastUpdated());
                 if (comm.getLastUpdated().before(remoteLastUpdatedTime)){
         			File destFile = new File(mContext.getExternalFilesDir(null), "Timings.csv");
         			copy(f, destFile);
