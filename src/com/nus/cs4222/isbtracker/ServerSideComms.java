@@ -29,7 +29,7 @@ public class ServerSideComms {
 	String lastUpdateFileName = "LastUpdated.txt";
 	
 	public ServerSideComms(){
-		Context mContext = ApplicationContext.get();
+		mContext = ApplicationContext.get();
 	}
 	
 	void pushData(int bsStart, String timeStart, double waitTime) {
