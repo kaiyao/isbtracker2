@@ -136,8 +136,8 @@ public class DtnComms {
                 	try {
 						Log.d(LOGTAG, "Building data");
 						message.addData()
-						.writeLong(comm.getLastUpdated().getTime());
-						//.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
+						.writeLong(comm.getLastUpdated().getTime())
+						.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
 						
 						Log.d(LOGTAG, "Sending message");
 						fwdLayer.sendMessage ( descriptor , message , "everyone" , null );
@@ -174,18 +174,17 @@ public class DtnComms {
                 message.switchToData();
                 Long remoteLastUpdatedTimeLong = message.readLong();
                 Date remoteLastUpdatedTime = new Date(remoteLastUpdatedTimeLong);
-                /*int numFiles = message.getNumFiles();
+                int numFiles = message.getNumFiles();
                 File f = message.getFile(0);
                 
                 ServerSideComms comm = new ServerSideComms();
                 if (comm.getLastUpdated().before(remoteLastUpdatedTime)){
         			File destFile = new File(mContext.getExternalFilesDir(null), "Timings.csv");
         			copy(f, destFile);
-                }*/
+        			
+        			createToast ("Received updated timings from " + source);
+                }
                 
-
-                // Update the text view in Main UI thread
-                createToast ("Received updated timings from " + source);
             }
             catch ( Exception e ) {
                 // Log the exception
