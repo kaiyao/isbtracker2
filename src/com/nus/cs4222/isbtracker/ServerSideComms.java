@@ -114,6 +114,7 @@ public class ServerSideComms {
 			line = bufferedReader.readLine();		
 			while(line != null){
 				lastUpdated = new Date(Long.parseLong(line));
+				line = bufferedReader.readLine();
 			}
 			bufferedReader.close();
 		} catch (IOException e) {

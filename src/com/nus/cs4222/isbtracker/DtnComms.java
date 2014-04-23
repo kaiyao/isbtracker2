@@ -130,26 +130,26 @@ public class DtnComms {
                 
                 ServerSideComms comm = new ServerSideComms();
                 
-                
+                if (comm.getLastUpdated() != null) {
+                	
                 // Data part
-                try {
-                	Log.d(LOGTAG, "Building data");
-					message.addData()
-					.writeLong(comm.getLastUpdated().getTime());
-					//.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
-				} catch (DtnMessageException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+                	try {
+						Log.d(LOGTAG, "Building data");
+						message.addData()
+						.writeLong(comm.getLastUpdated().getTime());
+						//.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
+						
+						Log.d(LOGTAG, "Sending message");
+						fwdLayer.sendMessage ( descriptor , message , "everyone" , null );
+					} catch (DtnMessageException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (ForwardingLayerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
                 
-                try {
-                	Log.d(LOGTAG, "Sending message");
-					fwdLayer.sendMessage ( descriptor , message , "everyone" , null );
-				} catch (ForwardingLayerException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-                
+                }                
                 
                 Toast.makeText(ApplicationContext.get(),
                         "DTN broadcast", Toast.LENGTH_SHORT).show();
