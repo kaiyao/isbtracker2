@@ -89,7 +89,8 @@ public class DtnComms {
                         // TODO: Implement this
                         // Register a listener for received messages
                         //ChatMessageListener messageListener = new ChatMessageListener();
-                        //fwdLayer.addMessageListener(descriptor, messageListener);
+                        DataMessageListener messageListener = new DataMessageListener();
+                        fwdLayer.addMessageListener(descriptor, messageListener);
                     } catch (Exception e) {
                         Log.e(LOGTAG, "Exception in middleware start listener", e);
                     }
@@ -133,8 +134,8 @@ public class DtnComms {
                 // Data part
                 try {
 					message.addData()
-					.writeLong(comm.getLastUpdated().getTime())
-					.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
+					.writeLong(comm.getLastUpdated().getTime());
+					//.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
 				} catch (DtnMessageException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -171,14 +172,14 @@ public class DtnComms {
                 message.switchToData();
                 Long remoteLastUpdatedTimeLong = message.readLong();
                 Date remoteLastUpdatedTime = new Date(remoteLastUpdatedTimeLong);
-                int numFiles = message.getNumFiles();
+                /*int numFiles = message.getNumFiles();
                 File f = message.getFile(0);
                 
                 ServerSideComms comm = new ServerSideComms();
                 if (comm.getLastUpdated().before(remoteLastUpdatedTime)){
         			File destFile = new File(mContext.getExternalFilesDir(null), "Timings.csv");
         			copy(f, destFile);
-                }
+                }*/
                 
 
                 // Update the text view in Main UI thread

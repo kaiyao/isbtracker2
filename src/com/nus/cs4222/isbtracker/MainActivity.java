@@ -302,4 +302,10 @@ public class MainActivity extends FragmentActivity {
     	new SyncDataTask().execute();
     	
     }
+    
+    public void onDtnTest(View v){
+    	Toast.makeText(ApplicationContext.get(),
+                "Test DTN", Toast.LENGTH_SHORT).show();
+    	
+    }
 }
