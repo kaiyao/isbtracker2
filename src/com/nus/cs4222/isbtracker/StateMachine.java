@@ -271,7 +271,10 @@ public class StateMachine {
 					currentState = State.PossiblyOnBus;
 				} else				
 				// position no longer near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > 50){ // Might have problem what if user runs after the bus?
+				if (nearestStop.getDistanceFromLocation(currentPosition) > 50 && 
+						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20 ||
+								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)
+						){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
 				}
@@ -296,7 +299,10 @@ public class StateMachine {
 					currentState = State.PossiblyOnBus;
 				}else
 				// position no longer near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > 50){ // Might have problem what if user runs after the bus?
+				if (nearestStop.getDistanceFromLocation(currentPosition) > 50 && 
+						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20 ||
+								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)
+						){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
 				}
