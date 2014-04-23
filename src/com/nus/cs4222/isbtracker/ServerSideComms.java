@@ -121,6 +121,7 @@ public class ServerSideComms {
 			e.printStackTrace();
 		}
 		
+		Log.d("DtnComms", "Last Updated:" + lastUpdated);
 		return lastUpdated;
 	}
 }

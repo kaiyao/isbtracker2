@@ -193,7 +193,6 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is elsewhere");
 			
 			disableContinousLocationAndSetLongActivityDetectionInterval();
-            dtnComms.stop();
 			
 			// Reset waiting time logger
 			lastWaitingTimeLogEnteredStateTime = null;
@@ -254,7 +253,6 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is possibly waiting for bus");
 
 			enableContinousGpsAndSetShortActivityDetectionInterval();
-            dtnComms.start();
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -545,6 +543,7 @@ public class StateMachine {
 		continuousLocationEnabled = false;
 
 		mListener.onStateMachineChanged(currentState);
+		dtnComms.start();
 	}
 
 	public void stopTracking() {

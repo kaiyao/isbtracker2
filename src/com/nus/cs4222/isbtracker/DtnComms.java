@@ -133,6 +133,7 @@ public class DtnComms {
                 
                 // Data part
                 try {
+                	Log.d(LOGTAG, "Building data");
 					message.addData()
 					.writeLong(comm.getLastUpdated().getTime());
 					//.addFile(new File(mContext.getExternalFilesDir(null), "Timings.csv"));
@@ -142,6 +143,7 @@ public class DtnComms {
 				}
                 
                 try {
+                	Log.d(LOGTAG, "Sending message");
 					fwdLayer.sendMessage ( descriptor , message , "everyone" , null );
 				} catch (ForwardingLayerException e) {
 					// TODO Auto-generated catch block
