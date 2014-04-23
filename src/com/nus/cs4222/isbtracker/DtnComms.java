@@ -1,8 +1,11 @@
 package com.nus.cs4222.isbtracker;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 import nus.dtn.api.fwdlayer.ForwardingLayerInterface;
 import nus.dtn.api.fwdlayer.ForwardingLayerProxy;
 import nus.dtn.middleware.api.DtnMiddlewareInterface;
@@ -11,11 +14,15 @@ import nus.dtn.middleware.api.MiddlewareEvent;
 import nus.dtn.middleware.api.MiddlewareListener;
 import nus.dtn.util.Descriptor;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Created by khteo on 4/23/14.
  */
 public class DtnComms {
     private static final String LOGTAG = DtnComms.class.getSimpleName();
+
+    private static final long UPDATE_INTERVAL_MILLIS = 20000;
 
     private Context mContext;
 
@@ -23,16 +30,20 @@ public class DtnComms {
     private ForwardingLayerInterface fwdLayer;
     private Descriptor descriptor;
 
-    boolean mIsStarted;
+    // To perform DTN broadcasts periodically on another thread
+    HandlerThread dtnUpdateThread;
+    Handler handler;
+
+    AtomicBoolean mIsStarted;
 
     public DtnComms() {
         mContext = ApplicationContext.get();
-        mIsStarted = false;
+        mIsStarted = new AtomicBoolean();
     }
 
     public void start() {
         // Don't start the middleware again if it is already started
-        if (mIsStarted) return;
+        if (mIsStarted.get()) return;
 
         try {
             // Start the middleware
@@ -58,6 +69,13 @@ public class DtnComms {
                         // Set the broadcast address
                         fwdLayer.setBroadcastAddress("com.nus.cs4222.isbtracker", "everyone");
 
+                        // Create HandlerThread for broadcasts
+                        dtnUpdateThread = new HandlerThread("DtnUpdateThread");
+                        dtnUpdateThread.start();
+                        handler = new Handler(dtnUpdateThread.getLooper());
+                        handler.post(broadcastTimings);
+
+                        // TODO: Implement this
                         // Register a listener for received messages
                         //ChatMessageListener messageListener = new ChatMessageListener();
                         //fwdLayer.addMessageListener(descriptor, messageListener);
@@ -67,7 +85,7 @@ public class DtnComms {
                 }
             });
 
-            mIsStarted = true;
+            mIsStarted.set(true);
         } catch (Exception e) {
             // Log the exception
             Log.e(LOGTAG, "Exception in onCreate()", e);
@@ -75,13 +93,31 @@ public class DtnComms {
     }
 
     public void stop() {
-        if (!mIsStarted) return;
+        if (!mIsStarted.get()) return;
 
         try {
+            mIsStarted.set(false);
+            handler.removeCallbacks(broadcastTimings);
+            handler = null;
+            dtnUpdateThread.quit();
+            dtnUpdateThread = null;
             middleware.stop();
-            mIsStarted = false;
         } catch (Exception e) {
             Log.e(LOGTAG, "Exception on stopping middleware", e);
         }
     }
+
+    private Runnable broadcastTimings = new Runnable() {
+        @Override
+        public void run() {
+            // This may be an unnecessary check; do it for paranoia
+            if (mIsStarted.get()) {
+                Log.d(LOGTAG, "DTN broadcast");
+                // TODO: Send broadcast message here
+                Toast.makeText(ApplicationContext.get(),
+                        "DTN broadcast", Toast.LENGTH_SHORT).show();
+                handler.postDelayed(broadcastTimings, UPDATE_INTERVAL_MILLIS);
+            }
+        }
+    };
 }

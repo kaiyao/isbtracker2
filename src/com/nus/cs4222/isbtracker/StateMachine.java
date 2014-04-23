@@ -545,6 +545,8 @@ public class StateMachine {
 		mListener.onLogMessage("Stop Tracking");
 		mIsTracking = false;
 
+        dtnComms.stop();
+
 		if (activityRecognition != null) {
 			activityRecognition.stopUpdates();
 		}
