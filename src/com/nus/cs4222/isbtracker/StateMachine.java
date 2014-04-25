@@ -73,7 +73,9 @@ public class StateMachine {
 		stateChangeList = new LinkedList<StateChange>();
 		tripSegmentsList = new LinkedList<TripSegmentMini>();
 
+		if (Common.ENABLE_DTN) {
         dtnComms = new DtnComms();
+	}
 	}
 
 	public void activityDetected(ActivityRecognitionResult result){
@@ -288,7 +290,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is waiting for bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
-            dtnComms.start();
+			if (dtnComms != null) dtnComms.start();
 			
 			if (lastLocationChangeDetected != null) {
 				Location currentPosition = lastLocationChangeDetected;
@@ -317,7 +319,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is possibly on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
-            dtnComms.stop();
+			if (dtnComms != null) dtnComms.stop();
 			
 			// ********************************************
 			// Check time spent waiting for bus at bus stop
@@ -379,7 +381,7 @@ public class StateMachine {
 			mListener.onLogMessage("Current State is on bus");
 			
 			enableContinousGpsAndSetShortActivityDetectionInterval();
-            dtnComms.stop();
+			if (dtnComms != null) dtnComms.stop();
 			
 			logTripSegment();
 			
