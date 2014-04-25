@@ -552,14 +552,14 @@ public class StateMachine {
 		continuousLocationEnabled = false;
 
 		mListener.onStateMachineChanged(currentState);
-		dtnComms.start();
+		if (dtnComms != null) dtnComms.start();
 	}
 
 	public void stopTracking() {
 		mListener.onLogMessage("Stop Tracking");
 		mIsTracking = false;
 
-        dtnComms.stop();
+		if (dtnComms != null) dtnComms.stop();
 
 		if (activityRecognition != null) {
 			activityRecognition.stopUpdates();
