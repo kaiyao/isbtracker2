@@ -116,13 +116,4 @@
         </LinearLayout>
     </ScrollView>
 
-    <Button
-        android:id="@+id/test_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/current_state_textview"
-        android:layout_toRightOf="@+id/sync_data"
-        android:onClick="onDtnTest"
-        android:text="Test DTN" />
-
 </RelativeLayout>
