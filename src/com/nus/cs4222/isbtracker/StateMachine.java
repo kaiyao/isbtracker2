@@ -17,11 +17,18 @@ import java.util.Set;
 
 public class StateMachine {
 	
+	public static final int BUS_STOP_FAR_DISTANCE_LIMIT = 50;
+	public static final int BUS_STOP_NEAR_DISTANCE_LIMIT = 20;
+	public static final int ROUTE_DISTANCE_LIMIT = 20;
+	
+	public static final int ON_FOOT_CONFIDENCE = 80;
+	public static final int IN_VEHICLE_CONFIDENCE = 60;
+	
 	public static final int ACTIVTY_DETECTION_INTERVAL_LONG = 20000;
 	public static final int ACTIVTY_DETECTION_INTERVAL_SHORT = 2000;
 	
 	public static final int VEHICLE_MIN_SPEED_KPH = 20;
-	public static final int VEHICLE_MIN_SPEED_MPS = VEHICLE_MIN_SPEED_KPH * 1000 / 3600;
+	public static final int VEHICLE_MIN_SPEED_MPS = VEHICLE_MIN_SPEED_KPH * 1000 / 3600;	
 	
 	public static boolean SPEED_SIMULATION_MODE = Common.SIMULATION_MODE;
 	
@@ -74,8 +81,8 @@ public class StateMachine {
 		tripSegmentsList = new LinkedList<TripSegmentMini>();
 
 		if (Common.ENABLE_DTN) {
-        dtnComms = new DtnComms();
-	}
+			dtnComms = new DtnComms();
+		}
 	}
 
 	public void activityDetected(ActivityRecognitionResult result){
@@ -266,20 +273,20 @@ public class StateMachine {
 				
 				// position is near bus stop and time more than one minute
 				Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
-				if (nearestStop.getDistanceFromLocation(currentPosition) <= 20 && 
+				if (nearestStop.getDistanceFromLocation(currentPosition) <= BUS_STOP_NEAR_DISTANCE_LIMIT && 
 						Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000) {
 					mListener.onLogMessage("position is near bus stop and time more than one minute");
 					currentState = State.WaitingForBus;
 				}else
 				// vehicle speed is fast or movement detected
-				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > IN_VEHICLE_CONFIDENCE || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
 					mListener.onLogMessage("vehicle motion or speed detected");
 					currentState = State.PossiblyOnBus;
 				} else				
 				// position no longer near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > 50 && 
-						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20 ||
-								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)
+				if (nearestStop.getDistanceFromLocation(currentPosition) > BUS_STOP_FAR_DISTANCE_LIMIT && 
+						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > ROUTE_DISTANCE_LIMIT ||
+								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > ON_FOOT_CONFIDENCE)
 						){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
@@ -301,14 +308,14 @@ public class StateMachine {
 				mListener.onLogMessage("Nearest stop " + nearestStop.getName() + " distance " + nearestStop.getDistanceFromLocation(currentPosition));
 				
 				// vehicle speed is fast or movement detected
-				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
+				if (confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > IN_VEHICLE_CONFIDENCE || lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS)  {
 					mListener.onLogMessage("vehicle motion or speed detected");
 					currentState = State.PossiblyOnBus;
 				}else
 				// position no longer near bus stop
-				if (nearestStop.getDistanceFromLocation(currentPosition) > 50 && 
-						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20 ||
-								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)
+				if (nearestStop.getDistanceFromLocation(currentPosition) > BUS_STOP_FAR_DISTANCE_LIMIT && 
+						(busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > ROUTE_DISTANCE_LIMIT ||
+								confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > ON_FOOT_CONFIDENCE)
 						){ // Might have problem what if user runs after the bus?
 					mListener.onLogMessage("position no longer near bus stop");
 					currentState = State.Elsewhere;
@@ -361,7 +368,7 @@ public class StateMachine {
 			
 			// accelerometer indicates vehicle movement
 			Time timeEnteredCurrentState = stateChangeList.getLast().getTimeEnteredState();
-			if ((confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > 50 || 
+			if ((confidenceForActivity(lastActivityDetected, DetectedActivity.IN_VEHICLE) > IN_VEHICLE_CONFIDENCE || 
 					lastLocationChangeDetected.getSpeed() > VEHICLE_MIN_SPEED_MPS) &&
 					Math.abs(getCurrentTime().toMillis(false) - timeEnteredCurrentState.toMillis(false)) > 60000)  {
 				mListener.onLogMessage("vehicle motion or speed detected");
@@ -369,10 +376,10 @@ public class StateMachine {
 			}
 			
 			// emergency bail out
-			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
+			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > ON_FOOT_CONFIDENCE)  {
 				mListener.onLogMessage("Walking detected. Bailing out. State changing to elsewhere.");
 				currentState = State.Elsewhere;
-			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20)  {
+			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > ROUTE_DISTANCE_LIMIT)  {
 				mListener.onLogMessage("Too far from road ("+busRoutes.getDistanceFromRoutes(lastLocationChangeDetected)+"m). State changing to elsewhere.");
 				currentState = State.Elsewhere;
 			}
@@ -386,10 +393,10 @@ public class StateMachine {
 			logTripSegment();
 			
 			//accelerometer indicates walking movement
-			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > 80)  {
+			if (confidenceForActivity(lastActivityDetected, DetectedActivity.ON_FOOT) > ON_FOOT_CONFIDENCE)  {
 				mListener.onLogMessage("Walking detected. State changing to elsewhere.");
 				currentState = State.Elsewhere;
-			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > 20)  {
+			}else if (busRoutes.getDistanceFromRoutes(lastLocationChangeDetected) > ROUTE_DISTANCE_LIMIT)  {
 				mListener.onLogMessage("Too far from road ("+busRoutes.getDistanceFromRoutes(lastLocationChangeDetected)+"m). State changing to elsewhere.");
 				currentState = State.Elsewhere;
 			}
@@ -447,7 +454,7 @@ public class StateMachine {
 					BusStop lastStop = tripSegmentsList.getFirst().getBusStop();
 					Set<BusStop> possibleFirstStops = new HashSet<BusStop>();
 					for (BusStop bs : BusStops.getInstance().getListOfStops()){
-						if (bs.getDistanceFromLocation(lastStop.getLocation()) < 50) {
+						if (bs.getDistanceFromLocation(lastStop.getLocation()) < BUS_STOP_FAR_DISTANCE_LIMIT) {
 							possibleFirstStops.add(bs);
 						}
 					}
